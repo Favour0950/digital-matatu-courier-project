@@ -1,0 +1,152 @@
+/* reset and the base */
+*, *::before, *::after{
+    box-sizing:border-box;
+    margin:0;
+    padding: 0;
+}
+/* css variables that have the color palette in one place */
+:root{
+    --navy: #0f172a; /*dark background*/
+    --card: #ffffff; /*white card background*/
+    --yellow: #f59e0b; /* primary button color */
+    --yellow-hover: #d97706; /* primary button hover color */
+    --text: #1e293b; /* dark body text color */
+    --muted: #64748b; /* gray labels */
+    --border: #cbd5e1; /* light gray borders */
+    --error:   #ef4444; /*red error color */
+    --input-bg:#f8fafc; /* light input background */
+}
+/* body -navy background */
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: var(--navy);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+/* the white card container */
+.login-container{
+    background-color: var(--card);
+    width: 100%;
+    max-width: 420px;
+    border-radius: 16px;
+    padding: 40px 36px;
+    margin: 20px;
+}
+/* brand section - logo, name, subtitle */
+.login-brand{
+    text-align: center;
+    margin-bottom: 32px;
+}
+/* logo icon */
+.logo-icon{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background-color: var(--navy);
+    border-radius: 14px;
+    font-size: 28px;
+    margin-bottom: 16px;
+}
+.login-brand h1{
+    font-size: 1.6 rem ;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+.login-brand .subtitle{
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+/* each input label + input row */
+.form-group{
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 18px;
+}
+.form-group label{
+    font-size:0.875rem;
+    font-weight: bold;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+.form-group input, .form-group select{
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    font-size: 0.95 rem;
+    color: var(--text);
+    outline: none;
+}
+.form-group input:focus, .form-group select:focus{
+    border-color: var(--yellow);
+}
+/* input inside wrapper */
+.input-wrapper{
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 14px;
+}
+.input-wrapper input:focus{
+    border:none;
+    outline: none;
+}
+#toggle-password{
+   background: none;
+   border: none;
+   padding: 0 14px;
+   color: var(--muted);
+   font-size: 0.8rem;
+    cursor: pointer;
+}
+/* error-span */
+.error-span{
+    color: var(--error);
+    font-size: 0.75rem;
+    margin-top: 4px;
+    min-height: 16px;
+}
+/* ── Invalid state on inputs ── */
+.form-group input.invalid,
+.form-group select.invalid {
+  border-color: var(--error);
+}
+/* ── Yellow Sign In button ── */
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--yellow);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.btn-primary:hover {
+  background-color: var(--yellow-hover);
+}
+/* ── Verify Account link below the form ── */
+.verify-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.verify-link a {
+  color: var(--yellow);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.verify-link a:hover {
+  text-decoration: underline;
+}

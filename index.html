@@ -3,9 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>SwiftCourier — Login</title>
+    <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
-    
+  <div class="login-container">
+    <!-- Brand section — logo, name, subtitle -->
+    <div class="login-brand">
+      <div class="logo-icon">🚚</div>
+      <h1>SwiftCourier</h1>
+      <p class="subtitle">Digital Courier Management System</p>
+    </div>
+    <!-- Login form -->
+    <form id="loginForm" novalidate>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Enter your email" />
+        <span class="error" id="email-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="password" placeholder="Enter your password" />
+          <button type="button" id="toggle-password">Show</button>
+        </div>
+        <span class="error" id="password-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="role">Sign in as</label>
+        <select id="role">
+          <option value="">-- Select role --</option>
+          <option value="clerk">Clerk</option>
+          <option value="admin">Administrator</option>
+        </select>
+        <span class="error" id="role-error"></span>
+      </div>
+
+      <button type="submit" class="btn-primary">Sign In</button>
+    </form>
+    <p class="verify-link">First-time? <a href="#">Verify Account</a></p>
+  </div>
+
+  <script src="js/main.js"></script>
 </body>
 </html>
+    

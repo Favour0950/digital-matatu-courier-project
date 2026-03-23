@@ -1,0 +1,121 @@
+//helper functions
+//checks that input is not empty
+function validateRequired(input, errorSpan, message){
+    if(input.value.trim() === ""){
+        input.classList.add("invalid");
+        errorSpan.textContent =message;
+        return false;
+    }else{
+        input.classList.remove("invalid");
+        errorSpan.textContent = "";
+        return true;    
+    }
+}
+//checks a select has something chosen
+function validateSelect(select, errorSpan, message){
+    if(select.value === ""){
+        select.classList.add("invalid");
+        errorSpan.textContent = message;
+        return false;
+    }else{
+        select.classList.remove("invalid");
+        errorSpan.textContent = "";
+        return true;    
+    }
+    }
+//cheks a value matches the basic email pattern
+function validateEmail(input, errorSpan){
+    const emailPattern= /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(input.value.trim() === ""){
+        input.classList.add("invalid");
+        errorSpan.textContent = "Email is required.";
+        return false;
+    }else if(!emailPattern.test(input.value.trim())){
+        input.classList.add("invalid");
+        errorSpan.textContent = "Please enter a valid email address.";
+        return false;
+    }else{
+        input.classList.remove("invalid");
+        errorSpan.textContent = "";
+        return true;    
+    }
+}
+//show/hide toggle for password field
+const toggleBtn = document.getElementById("toggle-password");
+const passwordInput = document.getElementById("password");
+//when button is clicked toggle between showing and hiding the password
+if(toggleBtn){
+    toggleBtn.addEventListener("click", function(){
+        //if currently hidden show text
+        if(passwordInput.type === "password"){
+            passwordInput.type = "text";
+            toggleBtn.textContent = "Hide";
+        }else{
+            passwordInput.type= "password";
+            toggleBtn.textContent = "Show";
+        }
+    });
+}
+// loginForm validation and submission handling
+const loginForm = document.getElementById("loginForm");
+if(loginForm){
+    loginForm.addEventListener("submit", function(event){
+        event.preventDefault(); //prevent default form submission
+        //grab all inputs and their errorSpans
+        const email = document.getElementById("email");
+        const emailError = document.getElementById("email-error");
+
+        const password = document.getElementById("password");
+        const passwordError = document.getElementById("password-error");
+
+        const role = document.getElementById("role");
+        const roleError = document.getElementById("role-error");
+        //ran all validations
+        const emailOk = validateEmail(email, emailError);
+        const passwordOk= validateRequired(password, passwordError, "Password is required.");
+        const roleOk = validateSelect(role, roleError, "Please select a role.");
+        //it only proceeds if everything is okay
+        if (emailOk && passwordOk && roleOk) {
+
+      // ── Temporary login check (no database yet) ──
+        const testAccounts = {
+        "clerk@courier.com":  { password: "password123", role: "clerk" },
+        "admin@courier.com":  { password: "password123", role: "admin"  }
+        };
+
+        const enteredEmail    = email.value.trim();
+        const enteredPassword = password.value;
+        const selectedRole    = role.value;
+
+        const account = testAccounts[enteredEmail];
+
+        // Check: does this email exist, does the password match, does the role match?
+        if (
+        account &&
+        account.password === enteredPassword &&
+        account.role === selectedRole
+      ) {
+        // ── sessionStorage — the sticky note ──
+        // We save the user's email and role so other pages can read it
+        // sessionStorage.setItem("key", "value") writes a value
+        // sessionStorage.getItem("key") reads it back on another page
+        sessionStorage.setItem("userEmail", enteredEmail);
+        sessionStorage.setItem("userRole", selectedRole);
+
+        // Send clerk to the clerk dashboard, admin to the admin dashboard
+        if (selectedRole === "clerk") {
+          window.location.href = "dashboard-clerk.html";
+        } else {
+          window.location.href = "dashboard-admin.html";
+        }
+
+      } else {
+        // Credentials don't match — show a general error message
+        // We put this on the email field's error span as a convenient spot
+        emailError.textContent = "Invalid email, password, or role. Please try again.";
+        email.classList.add("invalid");
+      }
+    }
+  });
+}
+
