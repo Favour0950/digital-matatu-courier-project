@@ -486,17 +486,6 @@ body.app{
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .form-grid-two {
-    grid-template-columns: 1fr;          /* single column on mobile */
-  }
-
-  .form-actions {
-    justify-content: stretch;
-  }
-
-  .btn-submit {
-    width: 100%;
-  }
 }
 @media (min-width: 769px) {
   .sidebar {

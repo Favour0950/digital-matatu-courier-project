@@ -159,5 +159,70 @@ if (hamburgerBtn) {
     overlay.classList.remove("active");
   });
 }
+//========REGISTER PARCEL FORM==========
+const registerForm = document.getElementById("registerParcelForm");
+if(registerForm){
+    registerForm.addEventListener("submit", function(event){
+        event.preventDefault(); //prevent default form submission
+        //grabing all inputs
+        const senderName     = document.getElementById("sender-name");
+        const senderPhone    = document.getElementById("sender-phone");
+        const senderLocation = document.getElementById("sender-location");
+        const receiverName     = document.getElementById("receiver-name");
+        const receiverPhone    = document.getElementById("receiver-phone");
+        const receiverLocation = document.getElementById("receiver-location");
+        const description    = document.getElementById("parcel-description");
+        const weight         = document.getElementById("parcel-weight");
+        const route          = document.getElementById("parcel-route");
+        const payment        = document.getElementById("parcel-payment");
 
+        //validate all field
+        //use an array to track if all validations pass
+        const ok= [
+            validateRequired(senderName,  document.getElementById("sender-name-error"), "Sender name is required."),
+            validateRequired(senderPhone,    document.getElementById("sender-phone-error"),    "Sender phone is required."),
+            validateRequired(senderLocation, document.getElementById("sender-location-error"), "Sender location is required."),
+            validateRequired(receiverName,     document.getElementById("receiver-name-error"),     "Receiver name is required."),
+            validateRequired(receiverPhone,    document.getElementById("receiver-phone-error"),    "Receiver phone is required."),
+            validateRequired(receiverLocation, document.getElementById("receiver-location-error"), "Receiver location is required."),
+            validateRequired(description, document.getElementById("parcel-description-error"), "Description is required."),
+            validateRequired(weight,      document.getElementById("parcel-weight-error"),      "Weight is required."),
+            validateSelect(route,   document.getElementById("parcel-route-error"),   "Please select a route."),
+            validateSelect(payment, document.getElementById("parcel-payment-error"), "Please select a payment method."),
+            ].every(Boolean); //check if all validations passed
 
+        if(ok){
+            //generate a random tracking number(for now)
+            const tracking= "PKG-"+
+            Math.floor(1000 + Math.random()* 9000)+ "-" +
+            Math.floor(1000 + Math.random()* 9000);
+
+            //show the success card, hide the form
+            document.getElementById("generatedTracking").textContent = tracking;
+            registerForm.style.display = "none";
+            document.getElementById("successCard").style.display = "block";  
+        }
+    });
+
+    //copy tracking number to clipboard
+    const copyBtn = document.getElementById("copyTrackingBtn");
+  if (copyBtn) {
+    copyBtn.addEventListener("click", function () {
+      const tracking = document.getElementById("generatedTracking").textContent;
+      navigator.clipboard.writeText(tracking);
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => { copyBtn.textContent = "Copy Number"; }, 2000);
+    });
+  }
+
+  // Register another — show form again, hide success card
+  const registerAnotherBtn = document.getElementById("registerAnotherBtn");
+  if (registerAnotherBtn) {
+    registerAnotherBtn.addEventListener("click", function () {
+      registerForm.reset();
+      registerForm.style.display = "block";
+      document.getElementById("successCard").style.display = "none";
+    });
+  }
+
+}  

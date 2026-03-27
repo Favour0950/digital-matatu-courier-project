@@ -79,4 +79,17 @@ Styling for the register parcel page
   border-color: var(--yellow);
   color: var(--yellow);
 }
+@media (max-width: 768px) {
+  .form-grid-two {
+    grid-template-columns: 1fr !important; /* Forces it to one column */
+  }
+  
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .btn-submit {
+    width: 100%;
+  }
+}
 
