@@ -19,13 +19,17 @@
     --page-bg: #f1f5f9; /* light page background for post-login pages */
 }
 /* body -navy background */
-body{
-    font-family: Arial, Helvetica, sans-serif;
-    background-color: var(--navy);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+/* Login page only */
+body.login-page {
+  background-color: var(--navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 /* the white card container */
 .login-container{
@@ -159,6 +163,7 @@ body.app{
     flex-direction: row;
     align-items: stretch;
     min-height: 100vh;
+    justify-content: flex-start;
     background-color: var(--page-bg); /* light page background for post-login pages */
 
 }
@@ -173,6 +178,7 @@ body.app{
     position: sticky;
     top: 0;
     flex-shrink: 0;/* prevent shrinking on smaller screens */
+    overflow-y: auto; /* allow scrolling if sidebar content exceeds viewport height */
 }
 .sidebar-brand{
     display: flex;
@@ -281,23 +287,24 @@ body.app{
 /* ── Main content area ── */
 .main-content {
   flex: 1;
-  padding: 32px;
+  padding: 16px 32px 32px 32px;
   overflow-y: auto;
 }
 
 .page-header {
   margin-bottom: 28px;
+  margin-top: 0;
 }
 
 .page-header h1 {
   font-size: 1.6rem;
-  color: var(--text);                    /* was #1e293b */
+  color: var(--navy);                    /* was #1e293b */
   margin-bottom: 4px;
 }
 
 .page-subtitle {
   font-size: 0.875rem;
-  color: var(--muted);                   /* was #64748b */
+  color: #94a3b8;                   /* was #64748b */
 }
 
 /* ── Stat cards ── */
@@ -329,7 +336,7 @@ body.app{
   color: var(--text);                    /* was #1e293b */
 }
 
-/* ── Table section ── */
+/* ── Table section for dashboard page── */
 .table-section {
   background-color: var(--card);         /* was #ffffff */
   border-radius: 12px;
@@ -392,27 +399,114 @@ body.app{
   background-color: #fef9c3;             
   color: #854d0e;                        
 }
-
-/* ════════════════════════════════
-   RESPONSIVE
-   ════════════════════════════════ */
+/* Hide mobile topbar on desktop */
+.mobile-topbar {
+  display: none;
+}
+/*    RESPONSIVE    */
 @media (max-width: 768px) {
+
   body.app {
     flex-direction: column;
   }
 
-  .sidebar {
+  /* Mobile topbar — thin strip across the very top */
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: var(--navy);
+    padding: 12px 16px;
     width: 100%;
-    min-height: auto;
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 998;
+    flex-shrink: 0;
+  }
+
+  .hamburger-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .mobile-topbar span {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+
+  /* Sidebar completely hidden off screen by default */
+  .sidebar {
+    display: flex;          /* keep it flex for internal layout */
+    position: fixed;
+    top: 0;
+    left: -220px;
+    width: 220px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.25s ease;
+    min-height: unset;      /* override the 100vh from desktop */
+  }
+
+  /* Slides in when JS adds this class */
+  .sidebar.sidebar-open {
+    left: 0;
+  }
+
+  /* Dim overlay behind open sidebar */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  /* Prevent horizontal overflow on main content */
+  .main-content {
     padding: 16px;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Table scrolls horizontally instead of overflowing */
+  .table-section {
+    overflow-x: auto;
   }
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .form-grid-two {
+    grid-template-columns: 1fr;          /* single column on mobile */
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .btn-submit {
+    width: 100%;
+  }
+}
+@media (min-width: 769px) {
+  .sidebar {
+    position: sticky;
+    left: auto;
+    height: 100vh;
+  }
 
   .main-content {
-    padding: 16px;
+    overflow-x: auto;
   }
-}               
+  
+}

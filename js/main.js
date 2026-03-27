@@ -1,4 +1,4 @@
-//helper functions
+//=========helper functions===============
 //checks that input is not empty
 function validateRequired(input, errorSpan, message){
     if(input.value.trim() === ""){
@@ -56,6 +56,8 @@ if(toggleBtn){
         }
     });
 }
+//================main form validations================
+//=====LOGIN FORM==========
 // loginForm validation and submission handling
 const loginForm = document.getElementById("loginForm");
 if(loginForm){
@@ -118,4 +120,44 @@ if(loginForm){
     }
   });
 }
+// dashboard to show user logged in information
+const sidebarName = document.getElementById("sidebar-name");
+const sidebarRole = document.getElementById("sidebar-role");
+
+if(sidebarName){
+    const email= sessionStorage.getItem("userEmail");
+    const role = sessionStorage.getItem("userRole");
+
+    sidebarName.textContent = email || "User";
+    sidebarRole.textContent = role || "Clerk";
+}
+const logoutBtn = document.getElementById("logoutBtn");
+if(logoutBtn){
+    logoutBtn.addEventListener("click", function(){
+        // Clear the session storage to "log out" the user
+        sessionStorage.clear();
+        // Redirect back to the login page
+        window.location.href = "index.html";
+    });
+
+}
+// ── Mobile sidebar toggle ──
+const hamburgerBtn = document.getElementById("hamburgerBtn");
+const sidebar = document.querySelector(".sidebar");
+const overlay = document.getElementById("sidebarOverlay");
+
+if (hamburgerBtn) {
+  // Open sidebar when hamburger is clicked
+  hamburgerBtn.addEventListener("click", function () {
+    sidebar.classList.add("sidebar-open");
+    overlay.classList.add("active");
+  });
+
+  // Close sidebar when overlay (dim area) is clicked
+  overlay.addEventListener("click", function () {
+    sidebar.classList.remove("sidebar-open");
+    overlay.classList.remove("active");
+  });
+}
+
 

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Parcel - SwiftCourier</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/pages.css">
+</head>
+<body class="app">
+        <div class="mobile-topbar">
+        <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+        <span>SwiftCourier</span>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo-icon small">🚚</div>
+        <span>SwiftCourier</span>
+        </div>
+        <nav class="sidebar-nav">
+        <p class="nav-section-label">Clerk Operations</p>
+        <ul>
+            <li><a href="dashboard-clerk.html">Dashboard</a></li>
+            <li><a href="register-parcel.html" class="active">Register Parcel</a></li>
+            <li><a href="search-parcel.html">Search Parcel</a></li>
+            <li><a href="update-status.html">Update Status</a></li>
+            <li><a href="record-payment.html">Record Payment</a></li>
+        </ul>
+        </nav>
+        <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="user-avatar">C</div>
+            <div class="user-info">
+            <span class="user-name" id="sidebar-name">Clerk</span>
+            <span class="user-role" id="sidebar-role">Clerk</span>
+            </div>
+        </div>
+        <button class="logout-btn" id="logoutBtn">Log Out</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <header class="page-header">
+            <h1>Register Parcel</h1>
+            <p class="page-subtitle">Fill in these details to register a new parcel</p>
+        </header>
+        <form id="registerParcelForm" novalidate>
+            <!-- top row has two grids of sender and receiver details side by side -->
+             <div class="form-grid-two">
+                <!-- sender card details -->
+                <div class="form-card">
+                    <h2 class="form-card-title">Sender Details</h2>
+
+                    <div class="form-group">
+                        <label for="sender-name">Full Name</label>
+                        <input type="text" id="sender-name" placeholder="Enter sender's full name" />
+                        <span class="error" id="sender-name-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sender-phone">Phone Number</label>
+                        <input type="tel" id="sender-phone" placeholder="e.g. 0712345678" />
+                        <span class="error" id="sender-phone-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sender-location">Location / Town</label>
+                        <input type="text" id="sender-location" placeholder="e.g. Nairobi" />
+                        <span class="error" id="sender-location-error"></span>
+                    </div>
+                </div>
+                <!-- Receiver details -->
+                <div class="form-card">
+                <h2 class="form-card-title">Receiver Details</h2>
+
+                <div class="form-group">
+                    <label for="receiver-name">Full Name</label>
+                    <input type="text" id="receiver-name" placeholder="Enter receiver's full name" />
+                    <span class="error" id="receiver-name-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="receiver-phone">Phone Number</label>
+                    <input type="tel" id="receiver-phone" placeholder="e.g. 0712345678" />
+                    <span class="error" id="receiver-phone-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="receiver-location">Location / Town</label>
+                    <input type="text" id="receiver-location" placeholder="e.g. Mombasa" />
+                    <span class="error" id="receiver-location-error"></span>
+                </div>
+                </div>
+             </div>
+             <!-- Parcel Information card — full width -->
+            <div class="form-card">
+                <h2 class="form-card-title">Parcel Information</h2>
+
+                <div class="form-grid-two">
+
+                <div class="form-group">
+                    <label for="parcel-description">Description</label>
+                    <input type="text" id="parcel-description" placeholder="e.g. Electronics, Clothes" />
+                    <span class="error" id="parcel-description-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="parcel-weight">Weight (kg)</label>
+                    <input type="number" id="parcel-weight" placeholder="e.g. 2.5" min="0" />
+                    <span class="error" id="parcel-weight-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="parcel-route">Route</label>
+                    <select id="parcel-route">
+                    <option value="">-- Select route --</option>
+                    <option value="nbi-msa">Nairobi → Mombasa</option>
+                    <option value="nbi-kisumu">Nairobi → Kisumu</option>
+                    <option value="nbi-nakuru">Nairobi → Nakuru</option>
+                    <option value="nbi-eldoret">Nairobi → Eldoret</option>
+                    <option value="msa-nbi">Mombasa → Nairobi</option>
+                    </select>
+                    <span class="error" id="parcel-route-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="parcel-payment">Payment Method</label>
+                    <select id="parcel-payment">
+                    <option value="">-- Select payment --</option>
+                    <option value="mpesa">M-Pesa</option>
+                    <option value="cash">Cash</option>
+                    <option value="bank">Bank Transfer</option>
+                    </select>
+                    <span class="error" id="parcel-payment-error"></span>
+                </div>
+
+                </div>
+            </div>
+
+            <!-- Submit button -->
+            <div class="form-actions">
+                <button type="submit" class="btn-primary btn-submit">
+                Save &amp; Generate Tracking No.
+                </button>
+            </div>
+
+            </form>
+
+            <!-- Success message — hidden until form submits successfully -->
+            <div class="success-card" id="successCard" style="display:none;">
+            <h2>Parcel Registered!</h2>
+            <p>Tracking Number</p>
+            <p class="tracking-number" id="generatedTracking">PKG-0000-0000</p>
+            <div class="success-actions">
+                <button class="btn-secondary" id="copyTrackingBtn">Copy Number</button>
+                <button class="btn-primary" id="registerAnotherBtn">Register Another</button>
+            </div>
+            </div>
+                
+
+            </main>
+            <script src="./js/main.js"></script>
+</body>
+</html>

@@ -6,7 +6,16 @@
     <title>Clerk Dashboard - SwiftCourier</title>
     <link rel="stylesheet" href="./css/style.css" />
   </head>
-  <body>
+  <body class="app">
+    <!-- Mobile top bar — only shows on small screens -->
+    <div class="mobile-topbar">
+      <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+      <span>SwiftCourier</span>
+    </div>
+
+    <!-- Overlay that dims the page when sidebar is open -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- sidebar -->
     <aside class="sidebar">
       <div class="sidebar-brand">
@@ -38,7 +47,7 @@
     <!-- main content -->
     <main class="main-content">
       <header class="page-header">
-        <h1>Dasboard</h1>
+        <h1>Dashboard</h1>
         <p class="page-subtitle">Welcome back - here's today's overview</p>
       </header>
       <!-- Stat cards row -->
