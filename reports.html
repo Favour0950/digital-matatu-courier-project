@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports — SwiftCourier</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/pages.css" />
+</head>
+<body class="app">
+
+  <div class="mobile-topbar">
+    <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+    <span>SwiftCourier</span>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon small">🚚</div>
+      <span>SwiftCourier</span>
+    </div>
+    <nav class="sidebar-nav">
+     
+      <p class="nav-section-label" style="margin-top: 16px;">Administration</p>
+      <ul>
+        <li><a href="dashboard-admin.html">Admin Dashboard</a></li>
+        <li><a href="manage-users.html">Manage Users</a></li>
+        <li><a href="manage-offices.html">Offices &amp; Routes</a></li>
+        <!-- active is on Reports for this page -->
+        <li><a href="reports.html" class="active">Reports</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <span class="user-name" id="sidebar-name">Admin</span>
+          <span class="user-role" id="sidebar-role">Administrator</span>
+        </div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <header class="page-header">
+      <h1>Reports</h1>
+      <p class="page-subtitle">Generate and export detailed reports for your courier operations.</p>
+    </header>
+
+    <!-- Filter card -->
+    <div class="form-card" style="margin-bottom: 24px;">
+      <h2 class="form-card-title">🔽 Report Filters</h2>
+      <p class="page-subtitle" style="margin-bottom: 16px;">Select date range and filter criteria</p>
+
+      <!-- Filter controls in a row -->
+      <div class="report-filters-row">
+        <div class="form-group">
+          <label for="filterStartDate">Start Date</label>
+          <input type="date" id="filterStartDate" />
+        </div>
+        <div class="form-group">
+          <label for="filterEndDate">End Date</label>
+          <input type="date" id="filterEndDate" />
+        </div>
+        <div class="form-group">
+          <label for="filterOffice">Office</label>
+          <select id="filterOffice">
+            <option value="">All Offices</option>
+            <option>Nairobi Central</option>
+            <option>Mombasa Central</option>
+            <option>Kisumu Main</option>
+            <option>Eldoret Hub</option>
+            <option>Nakuru Office</option>
+            <option>Nyeri Branch</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="filterClerk">Clerk</label>
+          <select id="filterClerk">
+            <option value="">All Clerks</option>
+            <option>Jane Mwangi</option>
+            <option>Peter Ochieng</option>
+            <option>Grace Wambui</option>
+            <option>David Kimani</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="report-btn-row">
+        <button class="btn-primary btn-generate" id="generateReportBtn">Generate Report</button>
+        <button class="btn-secondary" id="exportPdfBtn">📄 Export to PDF</button>
+        <button class="btn-secondary" id="exportExcelBtn">📊 Export to Excel</button>
+      </div>
+    </div>
+
+    <!-- Summary stat cards — shown after Generate is clicked -->
+    <div id="reportResults" style="display:none;">
+
+      <div class="stats-grid" style="margin-bottom: 24px;">
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <div>
+              <p class="stat-label">Total Parcels</p>
+              <p class="stat-value" id="rpt-parcels">0</p>
+            </div>
+            <div class="stat-icon-box">📦</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <div>
+              <p class="stat-label">Total Revenue</p>
+              <p class="stat-value" id="rpt-revenue">KES 0</p>
+            </div>
+            <div class="stat-icon-box green">💵</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <div>
+              <p class="stat-label">Arrived</p>
+              <p class="stat-value" id="rpt-arrived">0</p>
+            </div>
+            <div class="stat-icon-box green">📈</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top">
+            <div>
+              <p class="stat-label">Active Clerks</p>
+              <p class="stat-value" id="rpt-clerks">0</p>
+            </div>
+            <div class="stat-icon-box yellow">👥</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily manifest table -->
+      <div class="table-section">
+        <div class="table-header-row">
+          <div>
+            <h2>Daily Manifest</h2>
+            <p class="page-subtitle" id="manifestSubtitle">Showing results</p>
+          </div>
+          <!-- Download button for the manifest -->
+          <button class="btn-secondary" id="downloadManifestBtn">⬇ Download</button>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tracking ID</th>
+              <th>Sender</th>
+              <th>Receiver</th>
+              <th>Route</th>
+              <th>Status</th>
+              <th>Amount</th>
+              <th>Clerk</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="manifestTableBody"></tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="./js/main.js"></script>
+</body>
+</html>

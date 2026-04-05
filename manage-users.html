@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Users — SwiftCourier</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/pages.css" />
+</head>
+<body class="app">
+
+  <div class="mobile-topbar">
+    <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+    <span>SwiftCourier</span>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon small">🚚</div>
+      <span>SwiftCourier</span>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <p class="nav-section-label" style="margin-top: 16px;">Administration</p>
+      <ul>
+        <li><a href="dashboard-admin.html">Admin Dashboard</a></li>
+        <!-- class="active" is on Manage Users for this page -->
+        <li><a href="manage-users.html" class="active">Manage Users</a></li>
+        <li><a href="manage-offices.html">Offices &amp; Routes</a></li>
+        <li><a href="reports.html">Reports</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <span class="user-name" id="sidebar-name">Admin</span>
+          <span class="user-role" id="sidebar-role">Administrator</span>
+        </div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- Page header with Add New Clerk button on the right -->
+    <header class="page-header page-header-row">
+      <div>
+        <h1>Manage Users</h1>
+        <p class="page-subtitle">Add, edit, and manage clerk accounts across all offices.</p>
+      </div>
+      <!-- Clicking this button opens the modal popup -->
+      <button class="btn-primary btn-add" id="openAddClerkModal">+ Add New Clerk</button>
+    </header>
+
+    <!-- 3 summary stat cards -->
+    <div class="stats-grid stats-grid-3">
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div>
+            <p class="stat-label">Total Clerks</p>
+            <p class="stat-value" id="totalClerksCount">6</p>
+          </div>
+          <div class="stat-icon-box">👤</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div>
+            <p class="stat-label">Active</p>
+            <p class="stat-value" id="activeClerksCount">4</p>
+          </div>
+          <div class="stat-icon-box green">👤</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div>
+            <p class="stat-label">Pending Verification</p>
+            <p class="stat-value" id="pendingClerksCount">1</p>
+          </div>
+          <div class="stat-icon-box yellow">👤</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- All clerks table with search -->
+    <div class="table-section">
+      <div class="table-header-row">
+        <h2>All Clerks</h2>
+        <!-- Search box filters the table rows with JS -->
+        <input
+          type="text"
+          id="clerkSearchInput"
+          class="table-search-input"
+          placeholder="🔍 Search clerks..."
+        />
+      </div>
+
+      <table class="data-table" id="clerksTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Office</th>
+            <th>Status</th>
+            <th>Parcels</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="clerksTableBody">
+          <!-- Rows are built by JavaScript below so they can be filtered and updated -->
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- ── Add New Clerk Modal ──
+       A modal is a popup that appears on top of the page.
+       It starts hidden (class "modal-hidden") and JS removes that class to show it. -->
+  <div class="modal-overlay modal-hidden" id="addClerkModal">
+    <div class="modal-box">
+
+      <div class="modal-header">
+        <div>
+          <h2>Add New Clerk</h2>
+          <p class="modal-subtitle">Create a new clerk account</p>
+        </div>
+        <!-- X button closes the modal -->
+        <button class="modal-close-btn" id="closeAddClerkModal">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label for="newClerkName">Full Name</label>
+        <input type="text" id="newClerkName" placeholder="Enter clerk's full name" />
+        <span class="error" id="newClerkName-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="newClerkEmail">Email Address</label>
+        <input type="email" id="newClerkEmail" placeholder="email@example.com" />
+        <span class="error" id="newClerkEmail-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="newClerkOffice">Assign Office</label>
+        <select id="newClerkOffice">
+          <option value="">Select office</option>
+          <option value="Nairobi Central">Nairobi Central</option>
+          <option value="Mombasa Central">Mombasa Central</option>
+          <option value="Kisumu Main">Kisumu Main</option>
+          <option value="Eldoret Hub">Eldoret Hub</option>
+          <option value="Nakuru Office">Nakuru Office</option>
+          <option value="Nyeri Branch">Nyeri Branch</option>
+        </select>
+        <span class="error" id="newClerkOffice-error"></span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelAddClerk">Cancel</button>
+        <button class="btn-primary" id="submitAddClerk">Add Clerk</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="./js/main.js"></script>
+</body>
+</html>

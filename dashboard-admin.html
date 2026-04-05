@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — SwiftCourier</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/pages.css" />
+</head>
+<body class="app admin-page">
+
+  <!-- Mobile top bar — only visible on small screens -->
+  <div class="mobile-topbar">
+    <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+    <span>SwiftCourier</span>
+  </div>
+
+  <!-- Dark overlay behind sidebar on mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon small">🚚</div>
+      <span>SwiftCourier</span>
+    </div>
+
+    <nav class="sidebar-nav">
+          <!-- Admin section — only admins see this -->
+      <p class="nav-section-label" style="margin-top: 16px;">Administration</p>
+      <ul>
+        <!-- class="active" is on Admin Dashboard for this page -->
+        <li><a href="dashboard-admin.html" class="active">Admin Dashboard</a></li>
+        <li><a href="manage-users.html">Manage Users</a></li>
+        <li><a href="offices-routes.html">Offices &amp; Routes</a></li>
+        <li><a href="reports.html">Reports</a></li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <span class="user-name" id="sidebar-name">Admin</span>
+          <span class="user-role" id="sidebar-role">Administrator</span>
+        </div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </aside>
+
+  <!-- ── Main content ── -->
+  <main class="main-content">
+
+    <header class="page-header">
+      <h1>Admin Dashboard</h1>
+      <p class="page-subtitle">Executive overview of your courier network performance.</p>
+    </header>
+
+    <!-- 4 stat cards -->
+    <div class="stats-grid">
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div>
+            <p class="stat-label">Total Parcels (30d)</p>
+            <p class="stat-value">3,842</p>
+          </div>
+          <!-- Icon box on the right -->
+          <div class="stat-icon-box">📦</div>
+        </div>
+        <p class="stat-change positive">↑ +18% vs last month</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div>
+            <p class="stat-label">Total Revenue (30d)</p>
+            <p class="stat-value">KES 2.4M</p>
+          </div>
+          <div class="stat-icon-box green">💵</div>
+        </div>
+        <p class="stat-change positive">↑ +24% vs last month</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div>
+            <p class="stat-label">Active Clerks</p>
+            <p class="stat-value">28</p>
+          </div>
+          <div class="stat-icon-box green">👥</div>
+        </div>
+        <p class="stat-change positive">↑ +2 vs last month</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div>
+            <p class="stat-label">Active Routes</p>
+            <p class="stat-value">12</p>
+          </div>
+          <div class="stat-icon-box yellow">📍</div>
+        </div>
+        <p class="stat-change neutral">0 vs last month</p>
+      </div>
+
+    </div>
+
+    <!-- Charts row — two charts side by side -->
+    <div class="charts-grid">
+
+      <!-- Parcel volume chart -->
+      <div class="form-card">
+        <h2 class="form-card-title">📈 30-Day Parcel Volume</h2>
+        <!-- Canvas is where Chart.js draws the graph -->
+        <canvas id="parcelVolumeChart" height="200"></canvas>
+      </div>
+
+      <!-- Revenue by route chart -->
+      <div class="form-card">
+        <h2 class="form-card-title">💵 Revenue by Route</h2>
+        <canvas id="revenueRouteChart" height="200"></canvas>
+      </div>
+
+    </div>
+
+    <!-- Top performing clerks table -->
+    <div class="table-section">
+      <h2>Top Performing Clerks</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Clerk Name</th>
+            <th>Office</th>
+            <th>Parcels</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="rank-badge rank-1">#1</span></td>
+            <td>Jane Mwangi</td>
+            <td>Nairobi Central</td>
+            <td>342</td>
+            <td>KES 285,000</td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-2">#2</span></td>
+            <td>Peter Ochieng</td>
+            <td>Mombasa Central</td>
+            <td>298</td>
+            <td>KES 248,000</td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge rank-3">#3</span></td>
+            <td>Grace Wambui</td>
+            <td>Kisumu Main</td>
+            <td>276</td>
+            <td>KES 231,000</td>
+          </tr>
+          <tr>
+            <td><span class="rank-badge">#4</span></td>
+            <td>David Kimani</td>
+            <td>Eldoret Hub</td>
+            <td>254</td>
+            <td>KES 212,000</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- Chart.js library — lets us draw charts without writing complex code -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="./js/main.js"></script>
+</body>
+</html>

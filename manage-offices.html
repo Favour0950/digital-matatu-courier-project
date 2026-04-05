@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offices &amp; Routes — SwiftCourier</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/pages.css" />
+</head>
+<body class="app">
+
+  <div class="mobile-topbar">
+    <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+    <span>SwiftCourier</span>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon small">🚚</div>
+      <span>SwiftCourier</span>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <p class="nav-section-label" style="margin-top: 16px;">Administration</p>
+      <ul>
+        <li><a href="dashboard-admin.html">Admin Dashboard</a></li>
+        <li><a href="manage-users.html">Manage Users</a></li>
+        <!-- active is on Offices & Routes for this page -->
+        <li><a href="manage-offices.html" class="active">Offices &amp; Routes</a></li>
+        <li><a href="reports.html">Reports</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">A</div>
+        <div class="user-info">
+          <span class="user-name" id="sidebar-name">Admin</span>
+          <span class="user-role" id="sidebar-role">Administrator</span>
+        </div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <header class="page-header">
+      <h1>Offices &amp; Routes</h1>
+      <p class="page-subtitle">Manage your branch offices and delivery routes.</p>
+    </header>
+
+    <!-- Tab bar — clicking switches between Offices and Routes views -->
+    <div class="tab-bar">
+      <button class="tab-btn tab-active" id="tabOffices" data-tab="offices">
+        🏢 Offices
+      </button>
+      <button class="tab-btn" id="tabRoutes" data-tab="routes">
+        🔀 Routes
+      </button>
+    </div>
+
+    <!-- ── OFFICES PANEL ── shown by default -->
+    <div id="panelOffices">
+      <div class="panel-header-row">
+        <div>
+          <h2>Branch Offices</h2>
+          <p class="page-subtitle">6 offices across Kenya</p>
+        </div>
+        <button class="btn-primary btn-add" id="openAddOfficeModal">+ Add Office</button>
+      </div>
+
+      <!-- Office cards grid — built by JS -->
+      <div class="offices-grid" id="officesGrid"></div>
+    </div>
+
+    <!-- ── ROUTES PANEL ── hidden until Routes tab is clicked -->
+    <div id="panelRoutes" style="display:none;">
+      <div class="panel-header-row">
+        <div>
+          <h2>Delivery Routes</h2>
+          <p class="page-subtitle" id="routeCount">7 active routes configured</p>
+        </div>
+        <button class="btn-primary btn-add" id="openAddRouteModal">+ Add Route</button>
+      </div>
+
+      <div class="table-section">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Distance</th>
+              <th>Base Price</th>
+              <th>Per Kg</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="routesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── Add Office Modal ── -->
+  <div class="modal-overlay modal-hidden" id="addOfficeModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h2>Add New Office</h2>
+          <p class="modal-subtitle">Register a new branch office</p>
+        </div>
+        <button class="modal-close-btn" id="closeAddOfficeModal">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label for="officeName">Office Name</label>
+        <input type="text" id="officeName" placeholder="e.g. Kisumu Main" />
+        <span class="error" id="officeName-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="officeAddress">Address</label>
+        <input type="text" id="officeAddress" placeholder="e.g. Oginga Odinga Street, Kisumu" />
+        <span class="error" id="officeAddress-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="officePhone">Phone Number</label>
+        <input type="tel" id="officePhone" placeholder="e.g. +254 57 345 6789" />
+        <span class="error" id="officePhone-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="officeEmail">Email</label>
+        <input type="email" id="officeEmail" placeholder="e.g. kisumu@swift.co.ke" />
+        <span class="error" id="officeEmail-error"></span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelAddOffice">Cancel</button>
+        <button class="btn-primary" id="submitAddOffice">Add Office</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Add Route Modal ── -->
+  <div class="modal-overlay modal-hidden" id="addRouteModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h2>Add New Route</h2>
+          <p class="modal-subtitle">Configure a new delivery route</p>
+        </div>
+        <button class="modal-close-btn" id="closeAddRouteModal">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label for="routeOrigin">Origin Office</label>
+        <select id="routeOrigin">
+          <option value="">Select origin</option>
+          <option>Nairobi Central</option>
+          <option>Mombasa Central</option>
+          <option>Kisumu Main</option>
+          <option>Eldoret Hub</option>
+          <option>Nakuru Office</option>
+          <option>Nyeri Branch</option>
+        </select>
+        <span class="error" id="routeOrigin-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="routeDestination">Destination Office</label>
+        <select id="routeDestination">
+          <option value="">Select destination</option>
+          <option>Nairobi Central</option>
+          <option>Mombasa Central</option>
+          <option>Kisumu Main</option>
+          <option>Eldoret Hub</option>
+          <option>Nakuru Office</option>
+          <option>Nyeri Branch</option>
+        </select>
+        <span class="error" id="routeDestination-error"></span>
+      </div>
+
+      <div class="form-grid-two">
+        <div class="form-group">
+          <label for="routeDistance">Distance (km)</label>
+          <input type="number" id="routeDistance" placeholder="0" min="0" />
+          <span class="error" id="routeDistance-error"></span>
+        </div>
+        <div class="form-group">
+          <label for="routeBasePrice">Base Price (KES)</label>
+          <input type="number" id="routeBasePrice" placeholder="0" min="0" />
+          <span class="error" id="routeBasePrice-error"></span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="routePerKg">Price per Kg (KES)</label>
+        <input type="number" id="routePerKg" placeholder="0" min="0" />
+        <span class="error" id="routePerKg-error"></span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelAddRoute">Cancel</button>
+        <button class="btn-primary" id="submitAddRoute">Add Route</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/main.js"></script>
+</body>
+</html>
