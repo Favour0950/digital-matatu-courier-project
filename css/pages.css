@@ -93,3 +93,244 @@ Styling for the register parcel page
   }
 }
 
+/* Estimated cost display box */
+.estimated-cost-box {
+  background-color: var(--input-bg);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.cost-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.cost-value {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.cost-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Textarea matches input styling */
+.form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--input-bg);
+  font-size: 0.95rem;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-group textarea:focus {
+  border-color: var(--yellow);
+}
+
+
+/* ── Search page ── */
+.search-bar-wrapper {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--card);
+  font-size: 0.95rem;
+  color: var(--text);
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--yellow);
+}
+
+.search-btn {
+  width: auto;
+  padding: 12px 12px;
+}
+
+.recent-searches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.recent-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.pill {
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pill:hover {
+  border-color: var(--yellow);
+  color: var(--yellow);
+}
+
+/* ── Shipment detail rows ── */
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: var(--muted);
+}
+
+.detail-value {
+  font-weight: bold;
+  color: var(--text);
+}
+
+/* ── Tracking timeline ── */
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 14px;
+  padding-bottom: 24px;
+  position: relative;
+}
+
+/* Vertical line connecting dots */
+.timeline-item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 16px;
+  width: 2px;
+  bottom: 0;
+  background-color: var(--border);
+}
+
+.timeline-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--border);
+  flex-shrink: 0;
+  margin-top: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Completed steps — grey filled dot */
+.timeline-item.completed .timeline-dot {
+  background-color: var(--muted);
+}
+
+/* Current active step — yellow dot */
+.timeline-item.active .timeline-dot {
+  background-color: var(--yellow);
+}
+
+.timeline-title {
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.timeline-date {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* ── ==========Update Status page============== ── */
+.status-summary {
+  background-color: var(--page-bg);
+  border-radius: 8px;
+  padding: 16px;
+}/* Status summary rows */
+
+.status-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.status-summary-row:last-child {
+  border-bottom: none;
+}
+/* ── Record Payment / Search bar shared styles ── */
+.search-bar-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 14px 10px 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--input-bg);
+  font-size: 0.95rem;
+  color: var(--text);
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--yellow);
+}
+
+.search-btn {
+  width: auto;
+  padding: 10px 24px;
+  white-space: nowrap;
+}
+
+/* Success icon circle */
+.success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #dcfce7;
+  color: #15803d;
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  font-weight: bold;
+}

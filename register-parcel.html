@@ -64,11 +64,10 @@
                         <input type="tel" id="sender-phone" placeholder="e.g. 0712345678" />
                         <span class="error" id="sender-phone-error"></span>
                     </div>
-
                     <div class="form-group">
-                        <label for="sender-location">Location / Town</label>
-                        <input type="text" id="sender-location" placeholder="e.g. Nairobi" />
-                        <span class="error" id="sender-location-error"></span>
+                    <label for="sender-id">ID Number</label>
+                    <input type="text" id="sender-id" placeholder="National ID or Passport" />
+                    <span class="error" id="sender-id-error"></span>
                     </div>
                 </div>
                 <!-- Receiver details -->
@@ -88,9 +87,16 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="receiver-location">Location / Town</label>
-                    <input type="text" id="receiver-location" placeholder="e.g. Mombasa" />
-                    <span class="error" id="receiver-location-error"></span>
+                <label for="destination-office">Destination Office</label>
+                <select id="destination-office">
+                    <option value="">Select destination office</option>
+                    <option value="mombasa">Mombasa Central</option>
+                    <option value="kisumu">Kisumu Main</option>
+                    <option value="nakuru">Nakuru Office</option>
+                    <option value="eldoret">Eldoret Hub</option>
+                    <option value="nyeri">Nyeri Branch</option>
+                </select>
+                <span class="error" id="destination-office-error"></span>
                 </div>
                 </div>
              </div>
@@ -124,6 +130,11 @@
                     </select>
                     <span class="error" id="parcel-route-error"></span>
                 </div>
+                <div class="estimated-cost-box">
+                    <p class="cost-label">Estimated Cost</p>
+                    <p class="cost-value" id="estimatedCost">KES 0</p>
+                    <p class="cost-note">Based on weight and destination</p>
+                    </div>
 
                 <div class="form-group">
                     <label for="parcel-payment">Payment Method</label>

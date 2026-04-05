@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Record Payment — SwiftCourier</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/pages.css" />
+</head>
+<body class="app">
+
+  <div class="mobile-topbar">
+    <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+    <span>SwiftCourier</span>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon small">🚚</div>
+      <span>SwiftCourier</span>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Clerk Operations</p>
+      <ul>
+        <li><a href="dashboard-clerk.html">Dashboard</a></li>
+        <li><a href="register-parcel.html">Register Parcel</a></li>
+        <li><a href="search-parcel.html">Search Parcel</a></li>
+        <li><a href="update-status.html">Update Status</a></li>
+        <li><a href="record-payment.html" class="active">Record Payment</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">C</div>
+        <div class="user-info">
+          <span class="user-name" id="sidebar-name">Clerk</span>
+          <span class="user-role" id="sidebar-role">Clerk</span>
+        </div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <header class="page-header">
+      <h1>Record Payment</h1>
+      <p class="page-subtitle">Find a parcel and record its payment details</p>
+    </header>
+
+    <!-- Step 1: Find parcel -->
+    <div class="form-card" style="margin-bottom: 20px;">
+      <h2 class="form-card-title">Find Parcel</h2>
+      <div class="search-bar-wrapper">
+        <input
+          type="text"
+          id="paymentSearchInput"
+          class="search-input"
+          placeholder="Enter tracking number e.g. PKG-2024-0892"
+        />
+        <button class="btn-primary search-btn" id="paymentSearchBtn">Find Parcel</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Payment form — hidden until parcel found -->
+    <div id="paymentSection" style="display:none;">
+      <div class="form-grid-two">
+
+        <!-- Parcel summary card -->
+        <div class="form-card">
+          <h2 class="form-card-title">Parcel Summary</h2>
+          <div class="status-summary">
+            <div class="status-summary-row">
+              <span class="detail-label">Tracking No.</span>
+              <span class="detail-value" id="pay-tracking">—</span>
+            </div>
+            <div class="status-summary-row">
+              <span class="detail-label">Sender</span>
+              <span class="detail-value" id="pay-sender">—</span>
+            </div>
+            <div class="status-summary-row">
+              <span class="detail-label">Route</span>
+              <span class="detail-value" id="pay-route">—</span>
+            </div>
+            <div class="status-summary-row">
+              <span class="detail-label">Estimated Cost</span>
+              <span class="detail-value" id="pay-cost">—</span>
+            </div>
+            <div class="status-summary-row">
+              <span class="detail-label">Payment Status</span>
+              <span class="detail-value" id="pay-status">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment details card -->
+        <div class="form-card">
+          <h2 class="form-card-title">Payment Details</h2>
+
+          <div class="form-group">
+            <label for="paymentMethod">Payment Method</label>
+            <select id="paymentMethod">
+              <option value="">-- Select method --</option>
+              <option value="mpesa">M-Pesa</option>
+              <option value="cash">Cash</option>
+              <option value="bank">Bank Transfer</option>
+            </select>
+            <span class="error" id="paymentMethod-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="amountPaid">Amount Paid (KES)</label>
+            <input
+              type="number"
+              id="amountPaid"
+              placeholder="0"
+              min="0"
+            />
+            <span class="error" id="amountPaid-error"></span>
+          </div>
+
+          <div class="form-group" id="mpesaRefGroup" style="display:none;">
+            <label for="mpesaRef">M-Pesa Reference</label>
+            <input
+              type="text"
+              id="mpesaRef"
+              placeholder="e.g. QK7XYZ1234"
+            />
+            <span class="error" id="mpesaRef-error"></span>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-primary btn-submit" id="confirmPaymentBtn">
+              Confirm Payment
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Success message -->
+    <div id="paymentSuccess" style="display:none;">
+      <div class="form-card" style="text-align:center; padding: 48px;">
+        <div class="success-icon">✓</div>
+        <h2 style="margin: 16px 0 8px; color: var(--text);">Payment Recorded!</h2>
+        <p style="color: var(--muted); margin-bottom: 4px;">
+          <span id="success-pay-tracking"></span>
+        </p>
+        <p style="color: var(--muted); margin-bottom: 24px;">
+          Amount: <strong id="success-pay-amount"></strong> via <strong id="success-pay-method"></strong>
+        </p>
+        <button class="btn-primary btn-submit" id="recordAnotherBtn">
+          Record Another
+        </button>
+      </div>
+    </div>
+
+    <!-- Not found -->
+    <div id="paymentNotFound" style="display:none;">
+      <div class="form-card" style="text-align:center; padding: 48px;">
+        <p style="color: var(--muted);">No parcel found with that tracking number.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="./js/main.js"></script>
+</body>
+</html>

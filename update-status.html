@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Parcel — SwiftCourier</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/pages.css" />
+</head>
+<body class="app">
+
+  <div class="mobile-topbar">
+    <button class="hamburger-btn" id="hamburgerBtn">☰</button>
+    <span>SwiftCourier</span>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-icon small">🚚</div>
+      <span>SwiftCourier</span>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-section-label">Clerk Operations</p>
+      <ul>
+        <li><a href="dashboard-clerk.html">Dashboard</a></li>
+        <li><a href="register-parcel.html">Register Parcel</a></li>
+        <li><a href="search-parcel.html" >Search Parcel</a></li>
+        <li><a href="update-status.html" class="active">Update Status</a></li>
+        <li><a href="record-payment.html">Record Payment</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">C</div>
+        <div class="user-info">
+          <span class="user-name" id="sidebar-name">Clerk</span>
+          <span class="user-role" id="sidebar-role">Clerk</span>
+        </div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">Log Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+        <h1>Update Parcel Status</h1>
+        <p class="page-subtitle">Find a parcel and update its delivery status</p>
+    </header>
+    <!-- Find the parcel first -->
+     <div class="form-card" style="margin-bottom: 20px;">
+        <h2 class="form-card-title">Find parcel</h2>
+        <div class="search-bar-wrapper">
+            <input type="text"
+            id="statusSearchInput"
+            class="search-input"
+            placeholder="Enter a tracking number eg PKG-2024-0001"/>
+            <button class="btn-primary search-btn" id="statusSearchBtn">Search</button>
+        </div>
+     </div>
+     <!-- an update form that is hidden until the parcel is found -->
+      <div id="updateSection" style="display:none">
+        <div class="form-card">
+            <h2 class="form-card-title">Update Status</h2>
+            <!-- current parcel summary -->
+             <div class="status-summary">
+            <div class="status-summary-row">
+                <span class="detail-label">Tracking No.</span>
+                <span class="detail-value" id="upd-tracking">—</span>
+            </div>
+            <div class="status-summary-row">
+                <span class="detail-label">Sender</span>
+                <span class="detail-value" id="upd-sender">—</span>
+            </div>
+            <div class="status-summary-row">
+                <span class="detail-label">Route</span>
+                <span class="detail-value" id="upd-route">—</span>
+            </div>
+            <div class="status-summary-row">
+                <span class="detail-label">Current Status</span>
+                <span class="detail-value" id="upd-current-status">—</span>
+            </div>
+            </div>
+
+            <!-- new status selector -->
+              <div class="form-group" style="margin-top: 24px;">
+            <label for="newStatus">New Status</label>
+            <select id="newStatus">
+                <option value="">-- Select new status --</option>
+                <option value="Registered">Registered</option>
+                <option value="Dispatched">Dispatched</option>
+                <option value="In Transit">In Transit</option>
+                <option value="Arrived at Destination">Arrived at Destination</option>
+                <option value="Delivered">Delivered</option>
+            </select>
+            <span class="error" id="newStatus-error"></span>
+            </div>
+            <div class="form-actions">
+                <button class="btn-primary btn-submit" id="confirmUpdateBtn">
+                    Confirm Update
+                </button>
+            </div>
+        </div>
+      </div>
+      <!-- Success message -->
+        <div id="updateSuccess" style="display:none;">
+        <div class="form-card" style="text-align: center; padding: 48px;">
+            <p style="font-size: 2rem;">✅</p>
+            <h2 style="margin: 16px 0 8px; color: var(--text);">Status Updated!</h2>
+            <p style="color: var(--muted); margin-bottom: 24px;">
+            <span id="success-tracking"></span> is now
+            <strong id="success-status"></strong>
+            </p>
+            <button class="btn-primary btn-submit" id="updateAnotherBtn">
+            Update Another
+            </button>
+        </div>
+        </div>
+        <div id="updateNotFound" style="display:none;">
+        <div class="form-card" style="text-align: center; padding: 48px;">
+            <p style="color: var(--muted); font-size: 1rem;">
+            No parcel found with that tracking number.
+            </p>
+        </div>
+        </div>
+
+    </main>
+    <script src="./js/main.js"></script>
+</body>
+</html>
