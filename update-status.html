@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Search Parcel — SwiftCourier</title>
+  <title>Update Status — SwiftCourier</title>
   <link rel="stylesheet" href="./css/style.css" />
   <link rel="stylesheet" href="./css/pages.css" />
 </head>
 <body class="app">
 
+  <!-- Mobile top bar -->
   <div class="mobile-topbar">
     <button class="hamburger-btn" id="hamburgerBtn">☰</button>
     <span>SwiftCourier</span>
@@ -16,6 +17,7 @@
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+  <!-- ── Sidebar ── -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="logo-icon small">🚚</div>
@@ -26,7 +28,8 @@
       <ul>
         <li><a href="dashboard-clerk.html">Dashboard</a></li>
         <li><a href="register-parcel.html">Register Parcel</a></li>
-        <li><a href="search-parcel.html" >Search Parcel</a></li>
+        <li><a href="search-parcel.html">Search Parcel</a></li>
+        <!-- active marks this as the current page -->
         <li><a href="update-status.html" class="active">Update Status</a></li>
         <li><a href="record-payment.html">Record Payment</a></li>
       </ul>
@@ -43,89 +46,129 @@
     </div>
   </aside>
 
+  <!-- ── Main content ── -->
   <main class="main-content">
-    <header class="page-header">
-        <h1>Update Parcel Status</h1>
-        <p class="page-subtitle">Find a parcel and update its delivery status</p>
-    </header>
-    <!-- Find the parcel first -->
-     <div class="form-card" style="margin-bottom: 20px;">
-        <h2 class="form-card-title">Find parcel</h2>
-        <div class="search-bar-wrapper">
-            <input type="text"
-            id="statusSearchInput"
-            class="search-input"
-            placeholder="Enter a tracking number eg PKG-2024-0001"/>
-            <button class="btn-primary search-btn" id="statusSearchBtn">Search</button>
-        </div>
-     </div>
-     <!-- an update form that is hidden until the parcel is found -->
-      <div id="updateSection" style="display:none">
-        <div class="form-card">
-            <h2 class="form-card-title">Update Status</h2>
-            <!-- current parcel summary -->
-             <div class="status-summary">
-            <div class="status-summary-row">
-                <span class="detail-label">Tracking No.</span>
-                <span class="detail-value" id="upd-tracking">—</span>
-            </div>
-            <div class="status-summary-row">
-                <span class="detail-label">Sender</span>
-                <span class="detail-value" id="upd-sender">—</span>
-            </div>
-            <div class="status-summary-row">
-                <span class="detail-label">Route</span>
-                <span class="detail-value" id="upd-route">—</span>
-            </div>
-            <div class="status-summary-row">
-                <span class="detail-label">Current Status</span>
-                <span class="detail-value" id="upd-current-status">—</span>
-            </div>
-            </div>
 
-            <!-- new status selector -->
-              <div class="form-group" style="margin-top: 24px;">
-            <label for="newStatus">New Status</label>
-            <select id="newStatus">
-                <option value="">-- Select new status --</option>
-                <option value="Registered">Registered</option>
-                <option value="Dispatched">Dispatched</option>
-                <option value="In Transit">In Transit</option>
-                <option value="Arrived at Destination">Arrived at Destination</option>
-                <option value="Delivered">Delivered</option>
-            </select>
-            <span class="error" id="newStatus-error"></span>
-            </div>
-            <div class="form-actions">
-                <button class="btn-primary btn-submit" id="confirmUpdateBtn">
-                    Confirm Update
-                </button>
-            </div>
+    <header class="page-header">
+      <h1>Update Parcel Status</h1>
+      <p class="page-subtitle">Find a parcel and update its delivery status</p>
+    </header>
+
+    <!-- Step 1: Search for the parcel -->
+    <!-- JS listens for clicks on statusSearchBtn -->
+    <div class="form-card" style="margin-bottom: 20px;">
+      <h2 class="form-card-title">Find Parcel</h2>
+      <div class="search-bar-wrapper">
+        <input
+          type="text"
+          id="statusSearchInput"
+          class="search-input"
+          placeholder="Enter a tracking number e.g. PKG-2026-4874"
+        />
+        <button class="btn-primary search-btn" id="statusSearchBtn">Find Parcel</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Update form — hidden until parcel is found -->
+    <!-- JS sets display:block when a matching parcel comes back from the API -->
+    <div id="updateSection" style="display:none;">
+      <div class="form-card">
+        <h2 class="form-card-title">Update Status</h2>
+
+        <!-- Current parcel summary — filled by JS from API response -->
+        <div class="status-summary">
+
+          <div class="status-summary-row">
+            <span class="detail-label">Tracking No.</span>
+            <!-- JS writes the tracking number here after search -->
+            <span class="detail-value" id="upd-tracking">—</span>
+          </div>
+
+          <div class="status-summary-row">
+            <span class="detail-label">Sender</span>
+            <!-- JS writes sender name here -->
+            <span class="detail-value" id="upd-sender">—</span>
+          </div>
+
+          <div class="status-summary-row">
+            <span class="detail-label">Receiver</span>
+            <!-- ✅ ADDED — was missing in old version, JS expects upd-receiver -->
+            <span class="detail-value" id="upd-receiver">—</span>
+          </div>
+
+          <div class="status-summary-row">
+            <span class="detail-label">Current Status</span>
+            <!-- JS writes the current status AND adds a badge colour class here -->
+            <span class="detail-value" id="upd-current-status">—</span>
+          </div>
+
+        </div>
+
+        <!-- New status dropdown -->
+        <div class="form-group" style="margin-top: 24px;">
+          <label for="newStatusSelect">New Status</label>
+
+          <!-- ✅ KEY FIX: id changed from "newStatus" → "newStatusSelect" to match main.js -->
+          <!-- The old id="newStatus" caused JS to never find this element -->
+          <select id="newStatusSelect">
+            <option value="">-- Select new status --</option>
+            <!-- ✅ Status options updated to match what the backend accepts exactly -->
+            <!-- These must match the validStatuses array in statusController.js -->
+            <option value="Registered">Registered</option>
+            <option value="Dispatched">Dispatched</option>
+            <option value="In Transit">In Transit</option>
+            <option value="Arrived">Arrived</option>
+            <option value="Collected">Collected</option>
+          </select>
+          <span class="error" id="newStatus-error"></span>
+        </div>
+
+        <!-- Optional notes field — clerk can add context to the status change -->
+        <div class="form-group">
+          <label for="statusNotes">Notes (optional)</label>
+          <input
+            type="text"
+            id="statusNotes"
+            placeholder="e.g. Loaded onto vehicle at Nairobi depot"
+          />
+        </div>
+
+        <div class="form-actions">
+          <!-- JS listens for clicks on confirmStatusBtn -->
+          <button class="btn-primary btn-submit" id="confirmStatusBtn">
+            Confirm Update
+          </button>
         </div>
       </div>
-      <!-- Success message -->
-        <div id="updateSuccess" style="display:none;">
-        <div class="form-card" style="text-align: center; padding: 48px;">
-            <p style="font-size: 2rem;">✅</p>
-            <h2 style="margin: 16px 0 8px; color: var(--text);">Status Updated!</h2>
-            <p style="color: var(--muted); margin-bottom: 24px;">
-            <span id="success-tracking"></span> is now
-            <strong id="success-status"></strong>
-            </p>
-            <button class="btn-primary btn-submit" id="updateAnotherBtn">
-            Update Another
-            </button>
-        </div>
-        </div>
-        <div id="updateNotFound" style="display:none;">
-        <div class="form-card" style="text-align: center; padding: 48px;">
-            <p style="color: var(--muted); font-size: 1rem;">
-            No parcel found with that tracking number.
-            </p>
-        </div>
-        </div>
+    </div>
 
-    </main>
-    <script src="./js/main.js"></script>
+    <!-- ── Success screen — shown after status is updated successfully ── -->
+    <div id="updateSuccess" style="display:none;">
+      <div class="form-card" style="text-align: center; padding: 48px;">
+        <p style="font-size: 2rem;">✅</p>
+        <h2 style="margin: 16px 0 8px; color: var(--text);">Status Updated!</h2>
+        <p style="color: var(--muted); margin-bottom: 24px;">
+          <!-- JS fills in the new status value here -->
+          Status changed to: <strong id="success-new-status"></strong>
+        </p>
+        <!-- Clicking this resets the page so clerk can update another parcel -->
+        <button class="btn-primary btn-submit" id="updateAnotherBtn">
+          Update Another
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Not found message ── -->
+    <div id="updateNotFound" style="display:none;">
+      <div class="form-card" style="text-align: center; padding: 48px;">
+        <p style="color: var(--muted); font-size: 1rem;">
+          No parcel found with that tracking number.
+        </p>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="./js/main.js"></script>
 </body>
 </html>

@@ -61,9 +61,30 @@ const registerParcel = async (req, res) => {
 
     // ── Step 3: Generate a unique tracking number ──
     // Format: PKG-2026-XXXX  (same format your frontend was using)
-    const year = new Date().getFullYear()
-    const random = Math.floor(Math.random() * 9000) + 1000
-    const tracking_number = `PKG-${year}-${random}`
+    // const year = new Date().getFullYear()
+    // const random = Math.floor(Math.random() * 9000) + 1000
+    // const tracking_number = `PKG-${year}-${random}`
+    // ── Generate a unique tracking number ──
+// Loop until we find one that doesn't already exist in the database
+      let tracking_number
+      let isUnique = false
+
+      while (!isUnique) {
+        const year   = new Date().getFullYear()
+        const random = Math.floor(Math.random() * 9000) + 1000
+        tracking_number = `PKG-${year}-${random}`
+
+        // Check if this tracking number already exists
+        const existing = await pool.query(
+          'SELECT parcel_id FROM parcels WHERE tracking_number = $1',
+          [tracking_number]
+        )
+
+        // If no rows found, this number is unique — exit the loop
+        if (existing.rows.length === 0) {
+          isUnique = true
+        }
+      }
 
     // ── Step 4: Calculate estimated cost ──
     // Simple formula for now — we'll improve this with real route pricing later

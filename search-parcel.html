@@ -9,13 +9,16 @@
 </head>
 <body class="app">
 
+  <!-- Mobile top bar — only shows on small screens -->
   <div class="mobile-topbar">
     <button class="hamburger-btn" id="hamburgerBtn">☰</button>
     <span>SwiftCourier</span>
   </div>
 
+  <!-- Dark overlay that appears behind sidebar on mobile -->
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+  <!-- ── Sidebar navigation ── -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="logo-icon small">🚚</div>
@@ -26,6 +29,7 @@
       <ul>
         <li><a href="dashboard-clerk.html">Dashboard</a></li>
         <li><a href="register-parcel.html">Register Parcel</a></li>
+        <!-- class="active" marks the current page in the sidebar -->
         <li><a href="search-parcel.html" class="active">Search Parcel</a></li>
         <li><a href="update-status.html">Update Status</a></li>
         <li><a href="record-payment.html">Record Payment</a></li>
@@ -35,6 +39,7 @@
       <div class="sidebar-user">
         <div class="user-avatar">C</div>
         <div class="user-info">
+          <!-- These are filled by JS from sessionStorage at login -->
           <span class="user-name" id="sidebar-name">Clerk</span>
           <span class="user-role" id="sidebar-role">Clerk</span>
         </div>
@@ -43,114 +48,130 @@
     </div>
   </aside>
 
+  <!-- ── Main content area ── -->
   <main class="main-content">
 
     <header class="page-header">
       <h1>Search Parcel</h1>
       <p class="page-subtitle">Enter a tracking number to find a parcel</p>
     </header>
-    <!-- the search bar  -->
-     <div class="search-bar-wrapper">
-        <input type="text" 
-            id="searchInput"
-            class="search-input"
-            placeholder="Enter a tracking number eg PKG-1234-5678">
-            <button class="btn-primary search-btn" id="searchBtn">Search</button>
-     </div>
-     <div class="recent-searches">
-        <span class="recent-label">Recent:</span>
-        <button class="pill" data-tracking="PKG-2024-0001">PKG-2024-0001</button>
-        <button class="pill" data-tracking="PKG-2024-0002">PKG-2024-0002</button>
-        <button class="pill" data-tracking="PKG-2024-0003">PKG-2024-0003</button>
 
-     </div>
-     <!-- Results — hidden until search runs -->
+    <!-- Search bar — JS listens for clicks on searchBtn -->
+    <div class="search-bar-wrapper">
+      <input
+        type="text"
+        id="searchInput"
+        class="search-input"
+        placeholder="Enter a tracking number e.g. PKG-2026-4874"
+      />
+      <button class="btn-primary search-btn" id="searchBtn">Search</button>
+    </div>
+
+    <!-- Recent searches — these are just visual pills, not connected to backend yet -->
+    <div class="recent-searches">
+      <span class="recent-label">Recent:</span>
+      <!-- These pills can be clicked to pre-fill the search box -->
+      <button class="pill" data-tracking="PKG-2024-0001">PKG-2024-0001</button>
+      <button class="pill" data-tracking="PKG-2024-0002">PKG-2024-0002</button>
+      <button class="pill" data-tracking="PKG-2024-0003">PKG-2024-0003</button>
+    </div>
+
+    <!-- ── Results section — hidden until a search runs ── -->
+    <!-- JS sets this to display:block when a parcel is found -->
     <div id="searchResults" style="display:none;">
 
-      <!-- Two column: shipment details + timeline -->
       <div class="form-grid-two">
 
-        <!-- Shipment details card -->
+        <!-- LEFT CARD: Shipment details -->
         <div class="form-card">
           <h2 class="form-card-title">Shipment Details</h2>
+
           <div class="detail-row">
             <span class="detail-label">Tracking No.</span>
-            <span class="detail-value" id="res-tracking">—</span>
+            <!-- ✅ ID changed from res-tracking → result-tracking to match main.js -->
+            <span class="detail-value" id="result-tracking">—</span>
           </div>
+
           <div class="detail-row">
             <span class="detail-label">Sender</span>
-            <span class="detail-value" id="res-sender">—</span>
+            <!-- ✅ ID changed from res-sender → result-sender -->
+            <span class="detail-value" id="result-sender">—</span>
           </div>
+
           <div class="detail-row">
             <span class="detail-label">Receiver</span>
-            <span class="detail-value" id="res-receiver">—</span>
+            <!-- ✅ ID changed from res-receiver → result-receiver -->
+            <span class="detail-value" id="result-receiver">—</span>
           </div>
+
           <div class="detail-row">
-            <span class="detail-label">Route</span>
-            <span class="detail-value" id="res-route">—</span>
+            <span class="detail-label">Origin</span>
+            <!-- ✅ NEW — JS now sends origin and destination separately -->
+            <span class="detail-value" id="result-origin">—</span>
           </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Destination</span>
+            <!-- ✅ NEW — separate destination field -->
+            <span class="detail-value" id="result-destination">—</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Weight</span>
+            <!-- ✅ NEW — weight field -->
+            <span class="detail-value" id="result-weight">—</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Amount</span>
+            <!-- ✅ ID changed from res-payment → result-cost -->
+            <span class="detail-value" id="result-cost">—</span>
+          </div>
+
           <div class="detail-row">
             <span class="detail-label">Status</span>
-            <span class="detail-value" id="res-status">—</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">Payment</span>
-            <span class="detail-value" id="res-payment">—</span>
+            <!-- ✅ ID changed from res-status → result-status -->
+            <!-- JS will also add a badge CSS class to this element -->
+            <span class="detail-value" id="result-status">—</span>
           </div>
         </div>
-        <!-- Tracking timeline card -->
-         <div class="form-card">
-            <h2 class="form-card-title">Tracking timeline</h2>
-            <ul class="timeline" id="timeline">
-                <li class="timeline-item completed">
-                     <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <p class="timeline-title">Parcel Registered</p>
-                    <p class="timeline-date">—</p>
-                </div>
-                </li>
-                 <li class="timeline-item completed">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <p class="timeline-title">Dispatched</p>
-                    <p class="timeline-date">—</p>
-                </div>
-                </li>
-                <li class="timeline-item active">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <p class="timeline-title">In Transit</p>
-                    <p class="timeline-date">—</p>
-                </div>
-                </li>
-                <li class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <p class="timeline-title">Arrived at Destination</p>
-                    <p class="timeline-date">—</p>
-                </div>
-                </li>
-                <li class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <p class="timeline-title">Delivered</p>
-                    <p class="timeline-date">—</p>
-                </div>
-                </li>
-            </ul>
-         </div>
-        </div>
-        </div>
-        <!-- Not found message -->
-         <div id="notFound" style="display:none;">
-            <div class="form-card" style="text-align: center;padding: 40px">
-                <p style="font-size:1.1rem; color: var(--muted);">
-                    No parcel found for that tracking number.
-                </p>
-            </div>
-         </div>
-    </main>
 
-  <script src="js/main.js"></script>
+        <!-- RIGHT CARD: Tracking timeline -->
+        <div class="form-card">
+          <h2 class="form-card-title">Tracking Timeline</h2>
+
+          <!-- ✅ KEY CHANGE: replaced static <ul> with an empty <div> -->
+          <!-- JS builds the timeline dynamically from the status history returned by the API -->
+          <!-- Each status change in the database becomes one entry here -->
+          <div id="trackingTimeline">
+            <!-- Timeline entries are injected here by main.js after search -->
+            <!-- Each entry looks like:
+              <div class="timeline-entry">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <p class="timeline-status">Dispatched</p>
+                  <p class="timeline-note">Loaded onto vehicle</p>
+                  <p class="timeline-date">11/4/2026, 8:30:00 am</p>
+                </div>
+              </div>
+            -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Not found message — shown when tracking number doesn't exist ── -->
+    <div id="notFound" style="display:none;">
+      <div class="form-card" style="text-align: center; padding: 40px;">
+        <p style="font-size: 1.1rem; color: var(--muted);">
+          No parcel found for that tracking number.
+        </p>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="./js/main.js"></script>
 </body>
 </html>

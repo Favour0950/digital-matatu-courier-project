@@ -273,6 +273,56 @@ Styling for the register parcel page
   font-size: 0.75rem;
   color: var(--muted);
 }
+/* ── Tracking Timeline (Search Parcel page) ── */
+
+/* Each individual status entry in the timeline */
+.timeline-entry {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Remove border from the last entry */
+.timeline-entry:last-child {
+  border-bottom: none;
+}
+
+/* The coloured dot on the left */
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--yellow);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* Text content beside the dot */
+.timeline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* The status name e.g. "Dispatched" */
+.timeline-status {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+/* The notes e.g. "Loaded onto vehicle" */
+.timeline-note {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+/* The date and time */
+.timeline-date {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
 
 /* ── ==========Update Status page============== ── */
 .status-summary {
