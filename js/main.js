@@ -88,67 +88,161 @@ if(toggleBtn){
 //================main form validations================
 //=====LOGIN FORM==========
 // loginForm validation and submission handling
-const loginForm = document.getElementById("loginForm");
-if(loginForm){
-    loginForm.addEventListener("submit", function(event){
-        event.preventDefault(); //prevent default form submission
-        //grab all inputs and their errorSpans
-        const email = document.getElementById("email");
-        const emailError = document.getElementById("email-error");
+// const loginForm = document.getElementById("loginForm");
+// if(loginForm){
+//     loginForm.addEventListener("submit", function(event){
+//         event.preventDefault(); //prevent default form submission
+//         //grab all inputs and their errorSpans
+//         const email = document.getElementById("email");
+//         const emailError = document.getElementById("email-error");
 
-        const password = document.getElementById("password");
-        const passwordError = document.getElementById("password-error");
+//         const password = document.getElementById("password");
+//         const passwordError = document.getElementById("password-error");
 
-        const role = document.getElementById("role");
-        const roleError = document.getElementById("role-error");
-        //ran all validations
-        const emailOk = validateEmail(email, emailError);
-        const passwordOk= validateRequired(password, passwordError, "Password is required.");
-        const roleOk = validateSelect(role, roleError, "Please select a role.");
-        //it only proceeds if everything is okay
-        if (emailOk && passwordOk && roleOk) {
+//         const role = document.getElementById("role");
+//         const roleError = document.getElementById("role-error");
+//         //ran all validations
+//         const emailOk = validateEmail(email, emailError);
+//         const passwordOk= validateRequired(password, passwordError, "Password is required.");
+//         const roleOk = validateSelect(role, roleError, "Please select a role.");
+//         //it only proceeds if everything is okay
+//         if (emailOk && passwordOk && roleOk) {
 
-      // ── Temporary login check (no database yet) ──
-        const testAccounts = {
-        "clerk@courier.com":  { password: "password123", role: "clerk" },
-        "admin@courier.com":  { password: "password123", role: "admin"  }
-        };
+//       // ── Temporary login check (no database yet) ──
+//         const testAccounts = {
+//         "clerk@courier.com":  { password: "password123", role: "clerk" },
+//         "admin@courier.com":  { password: "password123", role: "admin"  }
+//         };
 
-        const enteredEmail    = email.value.trim();
-        const enteredPassword = password.value;
-        const selectedRole    = role.value;
+//         const enteredEmail    = email.value.trim();
+//         const enteredPassword = password.value;
+//         const selectedRole    = role.value;
 
-        const account = testAccounts[enteredEmail];
+//         const account = testAccounts[enteredEmail];
 
-        // Check: does this email exist, does the password match, does the role match?
-        if (
-        account &&
-        account.password === enteredPassword &&
-        account.role === selectedRole
-      ) {
-        // ── sessionStorage — the sticky note ──
-        // We save the user's email and role so other pages can read it
-        // sessionStorage.setItem("key", "value") writes a value
-        // sessionStorage.getItem("key") reads it back on another page
-        sessionStorage.setItem("userEmail", enteredEmail);
-        sessionStorage.setItem("userRole", selectedRole);
+//         // Check: does this email exist, does the password match, does the role match?
+//         if (
+//         account &&
+//         account.password === enteredPassword &&
+//         account.role === selectedRole
+//       ) {
+//         // ── sessionStorage — the sticky note ──
+//         // We save the user's email and role so other pages can read it
+//         // sessionStorage.setItem("key", "value") writes a value
+//         // sessionStorage.getItem("key") reads it back on another page
+//         sessionStorage.setItem("userEmail", enteredEmail);
+//         sessionStorage.setItem("userRole", selectedRole);
 
-        // Send clerk to the clerk dashboard, admin to the admin dashboard
-        if (selectedRole === "clerk") {
-          window.location.href = "dashboard-clerk.html";
+//         // Send clerk to the clerk dashboard, admin to the admin dashboard
+//         if (selectedRole === "clerk") {
+//           window.location.href = "dashboard-clerk.html";
+//         } else {
+//           window.location.href = "dashboard-admin.html";
+//         }
+
+//       } else {
+//         // Credentials don't match — show a general error message
+//         // We put this on the email field's error span as a convenient spot
+//         emailError.textContent = "Invalid email, password, or role. Please try again.";
+//         email.classList.add("invalid");
+//       }
+//     }
+//   });
+// }
+// ── Login ──
+const loginForm = document.getElementById('loginForm')
+
+if (loginForm) {
+
+  loginForm.addEventListener('submit', async function (event) {
+    event.preventDefault()
+
+    // Get the form field values
+    const email    = document.getElementById('email')
+    const password = document.getElementById('password')
+    const role     = document.getElementById('role')
+
+    // Get the error span elements
+    const emailError    = document.getElementById('email-error')
+    const passwordError = document.getElementById('password-error')
+    const roleError     = document.getElementById('role-error')
+
+    // Clear previous errors before validating again
+    emailError.textContent    = ''
+    passwordError.textContent = ''
+    roleError.textContent     = ''
+
+    // Basic frontend validation — check fields aren't empty before sending to server
+    let valid = true
+    if (!email.value.trim()) {
+      emailError.textContent = 'Email is required.'
+      valid = false
+    }
+    if (!password.value.trim()) {
+      passwordError.textContent = 'Password is required.'
+      valid = false
+    }
+    if (!role.value) {
+      roleError.textContent = 'Please select a role.'
+      valid = false
+    }
+    if (!valid) return
+
+    try {
+      // fetch() sends an HTTP request to your backend API
+      // 'await' means: wait here until the server responds before continuing
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json' // tells server we're sending JSON
+        },
+        body: JSON.stringify({
+          email: email.value.trim(),
+          password: password.value
+        })
+      })
+
+      // response.json() reads the response body and parses it as JSON
+      const data = await response.json()
+
+      if (response.ok) {
+        // response.ok means status 200 — login succeeded
+
+        // Check that the role selected on the form matches what's in the database
+        if (data.role !== role.value) {
+          emailError.textContent = 'Role does not match this account.'
+          return
+        }
+
+        // Save user info to sessionStorage — same as before, other pages read this
+        sessionStorage.setItem('userEmail', data.email)
+        sessionStorage.setItem('userRole', data.role)
+        sessionStorage.setItem('userName', data.name)
+
+        // Save the JWT token — we'll send this with every future API request
+        sessionStorage.setItem('token', data.token)
+
+        // Redirect based on role
+        if (data.role === 'clerk') {
+          window.location.href = 'dashboard-clerk.html'
         } else {
-          window.location.href = "dashboard-admin.html";
+          window.location.href = 'dashboard-admin.html'
         }
 
       } else {
-        // Credentials don't match — show a general error message
-        // We put this on the email field's error span as a convenient spot
-        emailError.textContent = "Invalid email, password, or role. Please try again.";
-        email.classList.add("invalid");
+        // Server returned an error (401 wrong password, etc)
+        emailError.textContent = data.message || 'Login failed. Please try again.'
       }
+
+    } catch (error) {
+      // This catches network errors — e.g. if the server isn't running
+      console.error('Login error:', error)
+      emailError.textContent = 'Cannot connect to server. Make sure the backend is running.'
     }
-  });
+  })
 }
+
+
 // dashboard to show user logged in information
 // ── Sidebar user info ──
 const sidebarName = document.getElementById("sidebar-name");
@@ -216,95 +310,231 @@ if (hamburgerBtn) {
   });
 }
 //========REGISTER PARCEL FORM==========
-const registerForm = document.getElementById("registerParcelForm");
-if(registerForm){
-    // Auto-calculate estimated cost when weight or destination changes
-    const weightInput = document.getElementById("parcel-weight");
-    const destOffice  = document.getElementById("destination-office");
-    const costDisplay = document.getElementById("estimatedCost");
+// const registerForm = document.getElementById("registerParcelForm");
+// if(registerForm){
+//     // Auto-calculate estimated cost when weight or destination changes
+//     const weightInput = document.getElementById("parcel-weight");
+//     const destOffice  = document.getElementById("destination-office");
+//     const costDisplay = document.getElementById("estimatedCost");
 
-    // Base prices per destination (hardcoded — backend will calculate properly later)
-    const routePrices = {
-      mombasa: { base: 500, perKg: 50 },
-      kisumu:  { base: 400, perKg: 45 },
-      nakuru:  { base: 250, perKg: 35 },
-      eldoret: { base: 350, perKg: 40 },
-      nyeri:   { base: 250, perKg: 35 },
-    };
+//     // Base prices per destination (hardcoded — backend will calculate properly later)
+//     const routePrices = {
+//       mombasa: { base: 500, perKg: 50 },
+//       kisumu:  { base: 400, perKg: 45 },
+//       nakuru:  { base: 250, perKg: 35 },
+//       eldoret: { base: 350, perKg: 40 },
+//       nyeri:   { base: 250, perKg: 35 },
+//     };
 
-    // the function to calculate the cost
-    function updateCost(){
-      const weight = parseFloat(weightInput.value) || 0;
-      const dest   = destOffice.value;
-      if (dest && routePrices[dest]) {
-        const price = routePrices[dest];
-        const total = price.base + (weight * price.perKg);
-        costDisplay.textContent = "KES " + total.toLocaleString();
+//     // the function to calculate the cost
+//     function updateCost(){
+//       const weight = parseFloat(weightInput.value) || 0;
+//       const dest   = destOffice.value;
+//       if (dest && routePrices[dest]) {
+//         const price = routePrices[dest];
+//         const total = price.base + (weight * price.perKg);
+//         costDisplay.textContent = "KES " + total.toLocaleString();
+//       } else {
+//         costDisplay.textContent = "KES 0";
+//       }
+//     }
+
+//     weightInput.addEventListener("input", updateCost);
+//     destOffice.addEventListener("change", updateCost);
+
+//     registerForm.addEventListener("submit", function(event){
+//         event.preventDefault(); //prevent default form submission
+//         //grabing all inputs
+//         const senderName  = document.getElementById("sender-name");
+//         const senderPhone = document.getElementById("sender-phone");
+//         const senderId    = document.getElementById("sender-id");
+//         const receiverName  = document.getElementById("receiver-name");
+//         const receiverPhone = document.getElementById("receiver-phone");
+//         const destination   = document.getElementById("destination-office");
+//         const description   = document.getElementById("parcel-description");
+//         const weight        = document.getElementById("parcel-weight");
+
+//         //validate all field
+//         //use an array to track if all validations pass
+//         const ok= [
+//             validateRequired(senderName,  document.getElementById("sender-name-error"),  "Sender name is required."),
+//             validateRequired(senderPhone, document.getElementById("sender-phone-error"), "Sender phone is required."),
+//             validateRequired(senderId,    document.getElementById("sender-id-error"),    "ID number is required."),
+//             validateRequired(receiverName,  document.getElementById("receiver-name-error"),  "Receiver name is required."),
+//             validateRequired(receiverPhone, document.getElementById("receiver-phone-error"), "Receiver phone is required."),
+//             validateSelect(destination, document.getElementById("destination-office-error"), "Please select a destination office."),
+//             validateRequired(description, document.getElementById("parcel-description-error"), "Description is required."),
+//             validateRequired(weight,      document.getElementById("parcel-weight-error"),      "Weight is required."),
+//             ].every(Boolean); //check if all validations passed
+
+//         if(ok){
+//             //generate a random tracking number(for now)
+//             const year     = new Date().getFullYear();
+//             const tracking = "PKG-" + year + "-" + String(Math.floor(Math.random() * 9000) + 1000);
+
+//             //show the success card, hide the form
+//             document.getElementById("generatedTracking").textContent = tracking;
+//             registerForm.style.display = "none";
+//             document.getElementById("successCard").style.display = "block";  
+//         }
+//     });
+// //fix
+//     //copy tracking number to clipboard
+//     const copyBtn = document.getElementById("copyTrackingBtn");
+//     if (copyBtn) {
+//       copyBtn.addEventListener("click", function () {
+//         const tracking = document.getElementById("generatedTracking").textContent;
+//         navigator.clipboard.writeText(tracking);
+//         copyBtn.textContent = "Copied!";
+//         setTimeout(() => { copyBtn.textContent = "Copy Number"; }, 2000);
+//       });
+//     }
+//     // Register another — show form again, hide success card
+//     const registerAnotherBtn = document.getElementById("registerAnotherBtn");
+//     if (registerAnotherBtn) {
+//       registerAnotherBtn.addEventListener("click", function () {
+//         registerForm.reset();
+//         registerForm.style.display = "block";
+//         document.getElementById("successCard").style.display = "none";
+//       });
+//     }
+// }  
+// ── Register Parcel ──
+const registerForm = document.getElementById('registerParcelForm')
+
+if (registerForm) {
+
+  // Cost calculator — runs when weight or destination changes
+  // This still works on the frontend without hitting the backend
+  const weightInput = document.getElementById('parcel-weight')
+  const destOffice  = document.getElementById('destination-office')
+  const costDisplay = document.getElementById('estimatedCost')
+
+  const routePrices = {
+    mombasa: { base: 500, perKg: 50 },
+    kisumu:  { base: 400, perKg: 45 },
+    nakuru:  { base: 250, perKg: 35 },
+    eldoret: { base: 350, perKg: 40 },
+    nyeri:   { base: 250, perKg: 35 },
+  }
+
+  function updateCost() {
+    const weight = parseFloat(weightInput.value) || 0
+    const dest   = destOffice.value
+    if (dest && routePrices[dest]) {
+      const price = routePrices[dest]
+      const total = price.base + (weight * price.perKg)
+      costDisplay.textContent = 'KES ' + total.toLocaleString()
+    } else {
+      costDisplay.textContent = 'KES 0'
+    }
+  }
+
+  weightInput.addEventListener('input', updateCost)
+  destOffice.addEventListener('change', updateCost)
+
+  // Form submission — sends real data to backend API
+  registerForm.addEventListener('submit', async function (event) {
+    event.preventDefault()
+
+    // Get all form field elements
+    const senderName    = document.getElementById('sender-name')
+    const senderPhone   = document.getElementById('sender-phone')
+    const senderId      = document.getElementById('sender-id')
+    const receiverName  = document.getElementById('receiver-name')
+    const receiverPhone = document.getElementById('receiver-phone')
+    const destination   = document.getElementById('destination-office')
+    const description   = document.getElementById('parcel-description')
+    const weight        = document.getElementById('parcel-weight')
+
+    // Validate all fields using your existing helper functions
+    const ok = [
+      validateRequired(senderName,    document.getElementById('sender-name-error'),       'Sender name is required.'),
+      validateRequired(senderPhone,   document.getElementById('sender-phone-error'),      'Sender phone is required.'),
+      validateRequired(senderId,      document.getElementById('sender-id-error'),         'ID number is required.'),
+      validateRequired(receiverName,  document.getElementById('receiver-name-error'),     'Receiver name is required.'),
+      validateRequired(receiverPhone, document.getElementById('receiver-phone-error'),    'Receiver phone is required.'),
+      validateSelect(destination,     document.getElementById('destination-office-error'),'Please select a destination office.'),
+      validateRequired(description,   document.getElementById('parcel-description-error'),'Description is required.'),
+      validateRequired(weight,        document.getElementById('parcel-weight-error'),     'Weight is required.'),
+    ].every(Boolean)
+
+    if (!ok) return
+
+    // Map dropdown value to office_id in database
+    // These match the offices we have in the DB
+    const officeIdMap = {
+      mombasa: 1,
+      kisumu:  1,
+      nakuru:  1,
+      eldoret: 1,
+      nyeri:   1,
+    }
+
+    try {
+      // Get the token saved at login — needed to prove user is logged in
+      const token = sessionStorage.getItem('token')
+
+      // Send POST request to backend with all parcel data
+      const response = await fetch('http://localhost:5000/api/parcels', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token  // attach token so backend accepts it
+        },
+        body: JSON.stringify({
+          sender_name:           senderName.value.trim(),
+          sender_phone:          senderPhone.value.trim(),
+          sender_id_number:      senderId.value.trim(),
+          receiver_name:         receiverName.value.trim(),
+          receiver_phone:        receiverPhone.value.trim(),
+          destination_office_id: officeIdMap[destination.value] || 1,
+          description:           description.value.trim(),
+          weight:                parseFloat(weight.value)
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Show the success screen with the real tracking number from the database
+        document.getElementById('generatedTracking').textContent = data.tracking_number
+        registerForm.style.display = 'none'
+        document.getElementById('successCard').style.display = 'block'
       } else {
-        costDisplay.textContent = "KES 0";
+        // Show error from server
+        document.getElementById('sender-name-error').textContent = data.message || 'Registration failed.'
       }
+
+    } catch (error) {
+      console.error('Register parcel error:', error)
+      document.getElementById('sender-name-error').textContent = 'Cannot connect to server.'
     }
+  })
 
-    weightInput.addEventListener("input", updateCost);
-    destOffice.addEventListener("change", updateCost);
+  // Copy tracking number button
+  const copyBtn = document.getElementById('copyTrackingBtn')
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      const tracking = document.getElementById('generatedTracking').textContent
+      navigator.clipboard.writeText(tracking)
+      copyBtn.textContent = 'Copied!'
+      setTimeout(() => { copyBtn.textContent = 'Copy Number' }, 2000)
+    })
+  }
 
-    registerForm.addEventListener("submit", function(event){
-        event.preventDefault(); //prevent default form submission
-        //grabing all inputs
-        const senderName  = document.getElementById("sender-name");
-        const senderPhone = document.getElementById("sender-phone");
-        const senderId    = document.getElementById("sender-id");
-        const receiverName  = document.getElementById("receiver-name");
-        const receiverPhone = document.getElementById("receiver-phone");
-        const destination   = document.getElementById("destination-office");
-        const description   = document.getElementById("parcel-description");
-        const weight        = document.getElementById("parcel-weight");
+  // Register another parcel — reset the form
+  const registerAnotherBtn = document.getElementById('registerAnotherBtn')
+  if (registerAnotherBtn) {
+    registerAnotherBtn.addEventListener('click', function () {
+      registerForm.reset()
+      costDisplay.textContent = 'KES 0'
+      registerForm.style.display = 'block'
+      document.getElementById('successCard').style.display = 'none'
+    })
+  }
+}
 
-        //validate all field
-        //use an array to track if all validations pass
-        const ok= [
-            validateRequired(senderName,  document.getElementById("sender-name-error"),  "Sender name is required."),
-            validateRequired(senderPhone, document.getElementById("sender-phone-error"), "Sender phone is required."),
-            validateRequired(senderId,    document.getElementById("sender-id-error"),    "ID number is required."),
-            validateRequired(receiverName,  document.getElementById("receiver-name-error"),  "Receiver name is required."),
-            validateRequired(receiverPhone, document.getElementById("receiver-phone-error"), "Receiver phone is required."),
-            validateSelect(destination, document.getElementById("destination-office-error"), "Please select a destination office."),
-            validateRequired(description, document.getElementById("parcel-description-error"), "Description is required."),
-            validateRequired(weight,      document.getElementById("parcel-weight-error"),      "Weight is required."),
-            ].every(Boolean); //check if all validations passed
-
-        if(ok){
-            //generate a random tracking number(for now)
-            const year     = new Date().getFullYear();
-            const tracking = "PKG-" + year + "-" + String(Math.floor(Math.random() * 9000) + 1000);
-
-            //show the success card, hide the form
-            document.getElementById("generatedTracking").textContent = tracking;
-            registerForm.style.display = "none";
-            document.getElementById("successCard").style.display = "block";  
-        }
-    });
-
-    //copy tracking number to clipboard
-    const copyBtn = document.getElementById("copyTrackingBtn");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", function () {
-        const tracking = document.getElementById("generatedTracking").textContent;
-        navigator.clipboard.writeText(tracking);
-        copyBtn.textContent = "Copied!";
-        setTimeout(() => { copyBtn.textContent = "Copy Number"; }, 2000);
-      });
-    }
-    // Register another — show form again, hide success card
-    const registerAnotherBtn = document.getElementById("registerAnotherBtn");
-    if (registerAnotherBtn) {
-      registerAnotherBtn.addEventListener("click", function () {
-        registerForm.reset();
-        registerForm.style.display = "block";
-        document.getElementById("successCard").style.display = "none";
-      });
-    }
-}  
 // ==============search parcel page===================
 // The five steps in order — used to mark which are completed/active
 const allSteps = [
