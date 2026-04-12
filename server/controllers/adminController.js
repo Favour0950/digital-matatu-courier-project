@@ -67,6 +67,7 @@ const getAllClerks = async (req, res) => {
         u.email,
         u.role,
         u.created_at,
+        u.office_id,
         o.office_name
       FROM users u
       LEFT JOIN offices o ON u.office_id = o.office_id
