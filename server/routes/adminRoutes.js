@@ -8,9 +8,13 @@ const {
   createClerk,
   getAllOffices,
   createOffice,
+  updateOffice,
+  deleteOffice,
   getReports,
   getRoutes,
   createRoute,
+  updateRoute,
+  deleteRoute,
   updateClerk,
   deleteClerk
 
@@ -33,12 +37,16 @@ router.post('/clerks', verifyToken, verifyAdmin, createClerk)
 
 
 // Office management
-router.get('/offices',  verifyToken, verifyAdmin, getAllOffices)
-router.post('/offices', verifyToken, verifyAdmin, createOffice)
+router.get('/offices',      verifyToken, verifyAdmin, getAllOffices)
+router.post('/offices',     verifyToken, verifyAdmin, createOffice)
+router.put('/offices/:id',  verifyToken, verifyAdmin, updateOffice)
+router.delete('/offices/:id', verifyToken, verifyAdmin, deleteOffice)
 
 // Route management
-router.get('/routes',  verifyToken, verifyAdmin, getRoutes)
-router.post('/routes', verifyToken, verifyAdmin, createRoute)
+router.get('/routes',      verifyToken, verifyAdmin, getRoutes)
+router.post('/routes',     verifyToken, verifyAdmin, createRoute)
+router.put('/routes/:id',  verifyToken, verifyAdmin, updateRoute)
+router.delete('/routes/:id', verifyToken, verifyAdmin, deleteRoute)
 
 router.put('/clerks/:id',    verifyToken, verifyAdmin, updateClerk)
 router.delete('/clerks/:id', verifyToken, verifyAdmin, deleteClerk)

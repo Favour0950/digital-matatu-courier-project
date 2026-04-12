@@ -148,13 +148,45 @@ window.deactivateClerk = function (index) {
 window.editOffice = function (index) {
   const office = _officesData[index]
   if (!office) return
-  alert('Edit office: ' + office.office_name + '\n(Edit form coming in the next update)')
+  const modal = document.getElementById('editOfficeModal')
+  if (!modal) return
+  document.getElementById('editOfficeId').value       = office.office_id
+  document.getElementById('editOfficeName').value     = office.office_name
+  document.getElementById('editOfficeLocation').value = office.location || ''
+  modal.classList.remove('modal-hidden')
+}
+
+window.deactivateOffice = function (index) {
+  const office = _officesData[index]
+  if (!office) return
+  if (confirm('Delete office "' + office.office_name + '"?\nThis cannot be undone.')) {
+    deleteOfficeFromBackend(office.office_id, office.office_name)
+  }
 }
 
 window.editRoute = function (index) {
   const route = _routesData[index]
   if (!route) return
-  alert('Edit route: ' + route.origin_name + ' → ' + route.destination_name + '\n(Edit form coming in the next update)')
+  const modal = document.getElementById('editRouteModal')
+  if (!modal) return
+  document.getElementById('editRouteId').value = route.route_id
+  // Load real offices into both dropdowns, then pre-select current values
+  loadOfficesIntoEditRouteModal().then(() => {
+    document.getElementById('editRouteOrigin').value      = route.origin_office_id
+    document.getElementById('editRouteDestination').value = route.destination_office_id
+  })
+  document.getElementById('editRouteDistance').value  = route.distance_km  || ''
+  document.getElementById('editRouteBasePrice').value = route.base_price   || ''
+  document.getElementById('editRoutePerKg').value     = route.price_per_kg || ''
+  modal.classList.remove('modal-hidden')
+}
+
+window.deactivateRoute = function (index) {
+  const route = _routesData[index]
+  if (!route) return
+  if (confirm('Delete route "' + route.origin_name + ' → ' + route.destination_name + '"?\nThis cannot be undone.')) {
+    deleteRouteFromBackend(route.route_id)
+  }
 }
 
 // Module-level arrays so the window.edit* functions above can access them
@@ -1369,6 +1401,7 @@ if (officesGrid) {
             <button class="btn-actions">···</button>
             <div class="actions-dropdown">
               <button onclick="editOffice(${index})">✏️ Edit</button>
+              <button class="danger" onclick="deactivateOffice(${index})">🗑️ Delete</button>
             </div>
           </div>
         </div>
@@ -1423,6 +1456,7 @@ if (officesGrid) {
             <button class="btn-actions">···</button>
             <div class="actions-dropdown">
               <button onclick="editRoute(${index})">✏️ Edit</button>
+              <button class="danger" onclick="deactivateRoute(${index})">🗑️ Delete</button>
             </div>
           </div>
         </td>
@@ -1615,6 +1649,183 @@ if (officesGrid) {
 
   // Load offices on page start
   loadOffices()
+
+  // ── EDIT OFFICE MODAL ──
+  const editOfficeModal    = document.getElementById('editOfficeModal')
+  const closeEditOfficeBtn = document.getElementById('closeEditOfficeModal')
+  const cancelEditOfficeBtn= document.getElementById('cancelEditOffice')
+
+  function closeEditOfficeModal() {
+    if (editOfficeModal) editOfficeModal.classList.add('modal-hidden')
+  }
+
+  if (closeEditOfficeBtn)  closeEditOfficeBtn.addEventListener('click',  closeEditOfficeModal)
+  if (cancelEditOfficeBtn) cancelEditOfficeBtn.addEventListener('click', closeEditOfficeModal)
+  if (editOfficeModal)     editOfficeModal.addEventListener('click', e => { if (e.target === editOfficeModal) closeEditOfficeModal() })
+
+  const saveEditOfficeBtn = document.getElementById('saveEditOffice')
+  if (saveEditOfficeBtn) {
+    saveEditOfficeBtn.addEventListener('click', async function () {
+      const nameInput     = document.getElementById('editOfficeName')
+      const locationInput = document.getElementById('editOfficeLocation')
+      const officeId      = document.getElementById('editOfficeId').value
+
+      const nameOk     = validateRequired(nameInput,     document.getElementById('editOfficeName-error'),     'Office name is required.')
+      const locationOk = validateRequired(locationInput, document.getElementById('editOfficeLocation-error'), 'Location is required.')
+
+      if (!nameOk || !locationOk) return
+
+      try {
+        const token = sessionStorage.getItem('token')
+        const response = await fetch(`http://localhost:5000/api/admin/offices/${officeId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            office_name: nameInput.value.trim(),
+            location:    locationInput.value.trim()
+          })
+        })
+
+        const data = await response.json()
+        if (response.ok) {
+          closeEditOfficeModal()
+          await loadOffices()
+        } else {
+          document.getElementById('editOfficeName-error').textContent = data.message || 'Update failed.'
+        }
+      } catch (error) {
+        console.error('Edit office error:', error)
+      }
+    })
+  }
+
+  // ── DELETE OFFICE ──
+  async function deleteOfficeFromBackend(officeId, officeName) {
+    try {
+      const token = sessionStorage.getItem('token')
+      const response = await fetch(`http://localhost:5000/api/admin/offices/${officeId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        alert(officeName + ' has been deleted.')
+        await loadOffices()
+      } else {
+        alert('Could not delete: ' + (data.message || 'Server error'))
+      }
+    } catch (error) {
+      console.error('Delete office error:', error)
+      alert('Could not connect to server.')
+    }
+  }
+
+  // ── EDIT ROUTE MODAL ──
+  const editRouteModal    = document.getElementById('editRouteModal')
+  const closeEditRouteBtn = document.getElementById('closeEditRouteModal')
+  const cancelEditRouteBtn= document.getElementById('cancelEditRoute')
+
+  function closeEditRouteModal() {
+    if (editRouteModal) editRouteModal.classList.add('modal-hidden')
+  }
+
+  // Loads real offices into the edit-route modal selects
+  async function loadOfficesIntoEditRouteModal() {
+    try {
+      const token    = sessionStorage.getItem('token')
+      const response = await fetch('http://localhost:5000/api/admin/offices', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      const offices = await response.json()
+      const options = '<option value="">Select</option>' +
+        offices.map(o => `<option value="${o.office_id}">${o.office_name}</option>`).join('')
+
+      const originSel = document.getElementById('editRouteOrigin')
+      const destSel   = document.getElementById('editRouteDestination')
+      if (originSel) originSel.innerHTML = options
+      if (destSel)   destSel.innerHTML   = options
+    } catch (error) {
+      console.error('Load offices for edit route modal error:', error)
+    }
+  }
+
+  if (closeEditRouteBtn)  closeEditRouteBtn.addEventListener('click',  closeEditRouteModal)
+  if (cancelEditRouteBtn) cancelEditRouteBtn.addEventListener('click', closeEditRouteModal)
+  if (editRouteModal)     editRouteModal.addEventListener('click', e => { if (e.target === editRouteModal) closeEditRouteModal() })
+
+  const saveEditRouteBtn = document.getElementById('saveEditRoute')
+  if (saveEditRouteBtn) {
+    saveEditRouteBtn.addEventListener('click', async function () {
+      const origin      = document.getElementById('editRouteOrigin')
+      const destination = document.getElementById('editRouteDestination')
+      const distance    = document.getElementById('editRouteDistance')
+      const basePrice   = document.getElementById('editRouteBasePrice')
+      const perKg       = document.getElementById('editRoutePerKg')
+      const routeId     = document.getElementById('editRouteId').value
+
+      const originOk  = validateSelect(origin,      document.getElementById('editRouteOrigin-error'),      'Select an origin.')
+      const destOk    = validateSelect(destination, document.getElementById('editRouteDestination-error'), 'Select a destination.')
+      const distOk    = validateRequired(distance,  document.getElementById('editRouteDistance-error'),    'Distance is required.')
+      const priceOk   = validateRequired(basePrice, document.getElementById('editRouteBasePrice-error'),   'Base price is required.')
+      const kgOk      = validateRequired(perKg,     document.getElementById('editRoutePerKg-error'),       'Price per kg is required.')
+
+      if (!originOk || !destOk || !distOk || !priceOk || !kgOk) return
+
+      try {
+        const token = sessionStorage.getItem('token')
+        const response = await fetch(`http://localhost:5000/api/admin/routes/${routeId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            origin_office_id:      parseInt(origin.value),
+            destination_office_id: parseInt(destination.value),
+            distance_km:           parseFloat(distance.value),
+            base_price:            parseFloat(basePrice.value),
+            price_per_kg:          parseFloat(perKg.value)
+          })
+        })
+
+        const data = await response.json()
+        if (response.ok) {
+          closeEditRouteModal()
+          await loadRoutes()
+        } else {
+          document.getElementById('editRouteOrigin-error').textContent = data.message || 'Update failed.'
+        }
+      } catch (error) {
+        console.error('Edit route error:', error)
+      }
+    })
+  }
+
+  // ── DELETE ROUTE ──
+  async function deleteRouteFromBackend(routeId) {
+    try {
+      const token = sessionStorage.getItem('token')
+      const response = await fetch(`http://localhost:5000/api/admin/routes/${routeId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+
+      if (response.ok) {
+        alert('Route deleted.')
+        await loadRoutes()
+      } else {
+        const data = await response.json()
+        alert('Could not delete: ' + (data.message || 'Server error'))
+      }
+    } catch (error) {
+      console.error('Delete route error:', error)
+      alert('Could not connect to server.')
+    }
+  }
 }
 
 
