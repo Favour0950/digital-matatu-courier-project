@@ -177,6 +177,39 @@
 
     </div>
   </div>
+  <!-- ── Edit Clerk Modal ── -->
+  <div class="modal-overlay modal-hidden" id="editClerkModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h2>Edit Clerk</h2>
+          <p class="modal-subtitle">Update clerk details</p>
+        </div>
+        <button class="modal-close-btn" id="closeEditClerkModal">✕</button>
+      </div>
+
+      <input type="hidden" id="editClerkId" />
+
+      <div class="form-group">
+        <label for="editClerkName">Full Name</label>
+        <input type="text" id="editClerkName" placeholder="Clerk's full name" />
+        <span class="error" id="editClerkName-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="editClerkOffice">Assigned Office</label>
+        <select id="editClerkOffice">
+          <option value="">Select office</option>
+        </select>
+        <span class="error" id="editClerkOffice-error"></span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelEditClerk">Cancel</button>
+        <button class="btn-primary" id="saveEditClerk">Save Changes</button>
+      </div>
+    </div>
+  </div>
 
   <script src="./js/main.js"></script>
 </body>

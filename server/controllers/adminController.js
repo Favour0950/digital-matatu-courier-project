@@ -319,12 +319,40 @@ const createRoute = async (req, res) => {
     res.status(500).json({ message: 'Server error creating route' })
   }
 }
+// PUT /api/admin/clerks/:id — update a clerk's name and office
+const updateClerk = async (req, res) => {
+  const { id } = req.params
+  const { name, office_id } = req.body
+  try {
+    await pool.query(
+      'UPDATE users SET name = $1, office_id = $2 WHERE user_id = $3 AND role = $4',
+      [name, office_id, id, 'clerk']
+    )
+    res.json({ message: 'Clerk updated successfully' })
+  } catch (error) {
+    console.error('Update clerk error:', error)
+    res.status(500).json({ message: 'Server error updating clerk' })
+  }
+}
 
+// DELETE /api/admin/clerks/:id — remove a clerk account
+const deleteClerk = async (req, res) => {
+  const { id } = req.params
+  try {
+    await pool.query('DELETE FROM users WHERE user_id = $1 AND role = $2', [id, 'clerk'])
+    res.json({ message: 'Clerk removed successfully' })
+  } catch (error) {
+    console.error('Delete clerk error:', error)
+    res.status(500).json({ message: 'Server error removing clerk' })
+  }
+}
 // Export all functions so routes can use them
 module.exports = {
   getDashboardStats,
   getRoutes,
   createRoute,
+  updateClerk,
+  deleteClerk,
   getAllClerks,
   createClerk,
   getAllOffices,

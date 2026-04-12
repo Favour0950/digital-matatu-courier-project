@@ -10,7 +10,10 @@ const {
   createOffice,
   getReports,
   getRoutes,
-  createRoute
+  createRoute,
+  updateClerk,
+  deleteClerk
+
 } = require('../controllers/adminController')
 
 // Import both middleware functions
@@ -36,6 +39,9 @@ router.post('/offices', verifyToken, verifyAdmin, createOffice)
 // Route management
 router.get('/routes',  verifyToken, verifyAdmin, getRoutes)
 router.post('/routes', verifyToken, verifyAdmin, createRoute)
+
+router.put('/clerks/:id',    verifyToken, verifyAdmin, updateClerk)
+router.delete('/clerks/:id', verifyToken, verifyAdmin, deleteClerk)
 
 // Reports
 router.get('/reports', verifyToken, verifyAdmin, getReports)
