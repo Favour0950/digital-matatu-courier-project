@@ -63,7 +63,7 @@
         <div class="stat-card-top">
           <div>
             <p class="stat-label">Total Clerks</p>
-            <p class="stat-value" id="totalClerksCount">6</p>
+            <p class="stat-value" id="totalClerksCount">—</p>
           </div>
           <div class="stat-icon-box">👤</div>
         </div>
@@ -73,7 +73,7 @@
         <div class="stat-card-top">
           <div>
             <p class="stat-label">Active</p>
-            <p class="stat-value" id="activeClerksCount">4</p>
+            <p class="stat-value" id="activeClerksCount">—</p>
           </div>
           <div class="stat-icon-box green">👤</div>
         </div>
@@ -83,7 +83,7 @@
         <div class="stat-card-top">
           <div>
             <p class="stat-label">Pending Verification</p>
-            <p class="stat-value" id="pendingClerksCount">1</p>
+            <p class="stat-value" id="pendingClerksCount">—</p>
           </div>
           <div class="stat-icon-box yellow">👤</div>
         </div>
@@ -154,21 +154,54 @@
         <label for="newClerkOffice">Assign Office</label>
         <select id="newClerkOffice">
           <option value="">Select office</option>
-          <option value="Nairobi Central">Nairobi Central</option>
-          <option value="Mombasa Central">Mombasa Central</option>
-          <option value="Kisumu Main">Kisumu Main</option>
-          <option value="Eldoret Hub">Eldoret Hub</option>
-          <option value="Nakuru Office">Nakuru Office</option>
-          <option value="Nyeri Branch">Nyeri Branch</option>
         </select>
         <span class="error" id="newClerkOffice-error"></span>
       </div>
+      <!-- Password field — clerk uses this to log in -->
+    <div class="form-group">
+      <label for="newClerkPassword">Temporary Password</label>
+      <input type="password" id="newClerkPassword" placeholder="Set a temporary password" />
+      <span class="error" id="newClerkPassword-error"></span>
+    </div>
 
       <div class="modal-actions">
         <button class="btn-secondary" id="cancelAddClerk">Cancel</button>
         <button class="btn-primary" id="submitAddClerk">Add Clerk</button>
       </div>
 
+    </div>
+  </div>
+  <!-- ── Edit Clerk Modal ── -->
+  <div class="modal-overlay modal-hidden" id="editClerkModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h2>Edit Clerk</h2>
+          <p class="modal-subtitle">Update clerk details</p>
+        </div>
+        <button class="modal-close-btn" id="closeEditClerkModal">✕</button>
+      </div>
+
+      <input type="hidden" id="editClerkId" />
+
+      <div class="form-group">
+        <label for="editClerkName">Full Name</label>
+        <input type="text" id="editClerkName" placeholder="Clerk's full name" />
+        <span class="error" id="editClerkName-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="editClerkOffice">Assigned Office</label>
+        <select id="editClerkOffice">
+          <option value="">Select office</option>
+        </select>
+        <span class="error" id="editClerkOffice-error"></span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelEditClerk">Cancel</button>
+        <button class="btn-primary" id="saveEditClerk">Save Changes</button>
+      </div>
     </div>
   </div>
 

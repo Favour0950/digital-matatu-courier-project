@@ -10,8 +10,14 @@ app.use(express.json()) // Middleware to parse JSON request bodies
 // Routes
 const authRoutes = require('./routes/authRoutes')
 const parcelRoutes = require('./routes/parcelRoutes')
+const paymentRoutes = require('./routes/paymentRoutes')
+const adminRoutes = require('./routes/adminRoutes')
+
+
 app.use('/api/auth', authRoutes)// Use auth routes for authentication-related endpoints
 app.use('/api/parcels', parcelRoutes)// Use parcel routes for parcel-related endpoints
+app.use('/api/payments', paymentRoutes)// Use payment routes for payment-related endpoints
+app.use('/api/admin', adminRoutes)// Use admin routes for admin-related endpoints
 //test route
 app.get('/', (req, res) => {
   res.json({ message: 'SwiftCourier API is running!' })
