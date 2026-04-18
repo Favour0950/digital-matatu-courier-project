@@ -1261,9 +1261,12 @@ if (clerksTableBodyEl) {
     }
 
     // Pre-fill the edit form with the clerk's current data
-    document.getElementById('editClerkId').value    = clerk.user_id
-    document.getElementById('editClerkName').value  = clerk.name
-    document.getElementById('editClerkEmail').value = clerk.email
+    document.getElementById('editClerkId').value   = clerk.user_id
+    document.getElementById('editClerkName').value = clerk.name
+    const editClerkEmailInput = document.getElementById('editClerkEmail')
+    if (editClerkEmailInput) {
+      editClerkEmailInput.value = clerk.email
+    }
 
     // Load offices into the edit modal dropdown and select current one
     loadOfficesForDropdown('editClerkOffice').then(() => {
