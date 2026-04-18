@@ -1388,10 +1388,15 @@ if (officesGrid) {
   }
 
   function renderOffices(data) {
+    const officeCountEl = document.getElementById('officeCount')
+
     if (data.length === 0) {
       officesGrid.innerHTML = `<p style="color:var(--muted);">No offices yet. Add your first office.</p>`
+      if (officeCountEl) officeCountEl.textContent = '0 offices'
       return
     }
+
+    if (officeCountEl) officeCountEl.textContent = `${data.length} office${data.length === 1 ? '' : 's'} across Kenya`
 
     officesGrid.innerHTML = data.map((office, index) => `
       <div class="office-card">
