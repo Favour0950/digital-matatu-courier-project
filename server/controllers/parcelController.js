@@ -60,31 +60,37 @@ const registerParcel = async (req, res) => {
     }
 
     // ── Step 3: Generate a unique tracking number ──
-    // Format: PKG-2026-XXXX  (same format your frontend was using)
-    // const year = new Date().getFullYear()
-    // const random = Math.floor(Math.random() * 9000) + 1000
-    // const tracking_number = `PKG-${year}-${random}`
-    // ── Generate a unique tracking number ──
-// Loop until we find one that doesn't already exist in the database
-      let tracking_number
-      let isUnique = false
+    // Format: PKG-2026-XXXX
+    // Try up to MAX_ATTEMPTS times to find a number not already in the database.
+    // Using a flag instead of checking inside the loop prevents continuing with
+    // a duplicate if the loop exits for any other reason.
+    const MAX_ATTEMPTS = 10
+    let tracking_number
+    let trackingFound = false
 
-      while (!isUnique) {
-        const year   = new Date().getFullYear()
-        const random = Math.floor(Math.random() * 9000) + 1000
-        tracking_number = `PKG-${year}-${random}`
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const year   = new Date().getFullYear()
+      const random = Math.floor(Math.random() * 9000) + 1000
+      const candidate = `PKG-${year}-${random}`
 
-        // Check if this tracking number already exists
-        const existing = await pool.query(
-          'SELECT parcel_id FROM parcels WHERE tracking_number = $1',
-          [tracking_number]
-        )
+      // Check if this tracking number already exists
+      const existing = await pool.query(
+        'SELECT parcel_id FROM parcels WHERE tracking_number = $1',
+        [candidate]
+      )
 
-        // If no rows found, this number is unique — exit the loop
-        if (existing.rows.length === 0) {
-          isUnique = true
-        }
+      // If no rows found, this number is unique — use it
+      if (existing.rows.length === 0) {
+        tracking_number = candidate
+        trackingFound = true
+        break
       }
+    }
+
+    // If all attempts were exhausted without finding a unique number, fail fast
+    if (!trackingFound) {
+      return res.status(500).json({ message: 'Could not generate a unique tracking number. Please try again.' })
+    }
 
     // ── Step 4: Calculate estimated cost ──
     // Simple formula for now — we'll improve this with real route pricing later

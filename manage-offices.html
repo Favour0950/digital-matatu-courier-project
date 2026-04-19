@@ -66,7 +66,7 @@
       <div class="panel-header-row">
         <div>
           <h2>Branch Offices</h2>
-          <p class="page-subtitle">6 offices across Kenya</p>
+          <p class="page-subtitle" id="officeCount">Loading offices…</p>
         </div>
         <button class="btn-primary btn-add" id="openAddOfficeModal">+ Add Office</button>
       </div>
@@ -80,7 +80,7 @@
       <div class="panel-header-row">
         <div>
           <h2>Delivery Routes</h2>
-          <p class="page-subtitle" id="routeCount">7 active routes configured</p>
+          <p class="page-subtitle" id="routeCount">Loading routes…</p>
         </div>
         <button class="btn-primary btn-add" id="openAddRouteModal">+ Add Route</button>
       </div>
@@ -207,6 +207,93 @@
       <div class="modal-actions">
         <button class="btn-secondary" id="cancelAddRoute">Cancel</button>
         <button class="btn-primary" id="submitAddRoute">Add Route</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Edit Office Modal ── -->
+  <div class="modal-overlay modal-hidden" id="editOfficeModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h2>Edit Office</h2>
+          <p class="modal-subtitle">Update office details</p>
+        </div>
+        <button class="modal-close-btn" id="closeEditOfficeModal">✕</button>
+      </div>
+
+      <input type="hidden" id="editOfficeId" />
+
+      <div class="form-group">
+        <label for="editOfficeName">Office Name</label>
+        <input type="text" id="editOfficeName" placeholder="e.g. Kisumu Main" />
+        <span class="error" id="editOfficeName-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="editOfficeLocation">Location</label>
+        <input type="text" id="editOfficeLocation" placeholder="e.g. Oginga Odinga Street, Kisumu" />
+        <span class="error" id="editOfficeLocation-error"></span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelEditOffice">Cancel</button>
+        <button class="btn-primary" id="saveEditOffice">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Edit Route Modal ── -->
+  <div class="modal-overlay modal-hidden" id="editRouteModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h2>Edit Route</h2>
+          <p class="modal-subtitle">Update route pricing and details</p>
+        </div>
+        <button class="modal-close-btn" id="closeEditRouteModal">✕</button>
+      </div>
+
+      <input type="hidden" id="editRouteId" />
+
+      <div class="form-group">
+        <label for="editRouteOrigin">Origin Office</label>
+        <select id="editRouteOrigin">
+          <option value="">Select origin</option>
+        </select>
+        <span class="error" id="editRouteOrigin-error"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="editRouteDestination">Destination Office</label>
+        <select id="editRouteDestination">
+          <option value="">Select destination</option>
+        </select>
+        <span class="error" id="editRouteDestination-error"></span>
+      </div>
+
+      <div class="form-grid-two">
+        <div class="form-group">
+          <label for="editRouteDistance">Distance (km)</label>
+          <input type="number" id="editRouteDistance" placeholder="0" min="0" />
+          <span class="error" id="editRouteDistance-error"></span>
+        </div>
+        <div class="form-group">
+          <label for="editRouteBasePrice">Base Price (KES)</label>
+          <input type="number" id="editRouteBasePrice" placeholder="0" min="0" />
+          <span class="error" id="editRouteBasePrice-error"></span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="editRoutePerKg">Price per Kg (KES)</label>
+        <input type="number" id="editRoutePerKg" placeholder="0" min="0" />
+        <span class="error" id="editRoutePerKg-error"></span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" id="cancelEditRoute">Cancel</button>
+        <button class="btn-primary" id="saveEditRoute">Save Changes</button>
       </div>
     </div>
   </div>

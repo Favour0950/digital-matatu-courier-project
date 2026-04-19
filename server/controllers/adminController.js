@@ -59,7 +59,7 @@ const getDashboardStats = async (req, res) => {
 const getAllClerks = async (req, res) => {
   try {
 
-    // JOIN users with offices so we get the office name, not just the ID
+    // JOIN users with offices so we get the office name and id, not just the FK
     const result = await pool.query(`
       SELECT 
         u.user_id,
@@ -67,6 +67,7 @@ const getAllClerks = async (req, res) => {
         u.email,
         u.role,
         u.created_at,
+        u.office_id,
         o.office_name
       FROM users u
       LEFT JOIN offices o ON u.office_id = o.office_id
@@ -182,6 +183,111 @@ const createOffice = async (req, res) => {
   } catch (error) {
     console.error('Create office error:', error)
     res.status(500).json({ message: 'Server error creating office' })
+  }
+}
+
+// ── PUT /api/admin/offices/:id ──
+// Updates an existing office's name and location
+const updateOffice = async (req, res) => {
+  const { id } = req.params
+  const { office_name, location } = req.body
+
+  if (!office_name || !location) {
+    return res.status(400).json({ message: 'Office name and location are required' })
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE offices SET office_name = $1, location = $2 WHERE office_id = $3 RETURNING *',
+      [office_name, location, id]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Office not found' })
+    }
+
+    res.json({ message: 'Office updated successfully', office: result.rows[0] })
+  } catch (error) {
+    console.error('Update office error:', error)
+    res.status(500).json({ message: 'Server error updating office' })
+  }
+}
+
+// ── DELETE /api/admin/offices/:id ──
+// Deletes an office (only if no clerks are assigned to it)
+const deleteOffice = async (req, res) => {
+  const { id } = req.params
+
+  try {
+    const clerksCheck = await pool.query(
+      'SELECT COUNT(*) AS total FROM users WHERE office_id = $1 AND role = $2',
+      [id, 'clerk']
+    )
+
+    if (parseInt(clerksCheck.rows[0].total) > 0) {
+      return res.status(400).json({
+        message: 'Cannot delete office: clerks are still assigned to it.'
+      })
+    }
+
+    await pool.query('DELETE FROM offices WHERE office_id = $1', [id])
+    res.json({ message: 'Office deleted successfully' })
+  } catch (error) {
+    console.error('Delete office error:', error)
+    res.status(500).json({ message: 'Server error deleting office' })
+  }
+}
+
+// ── PUT /api/admin/routes/:id ──
+// Updates an existing route's pricing and distance
+const updateRoute = async (req, res) => {
+  const { id } = req.params
+  const { origin_office_id, destination_office_id, distance_km, base_price, price_per_kg } = req.body
+
+  if (origin_office_id == null || destination_office_id == null) {
+    return res.status(400).json({ message: 'Origin and destination offices are required' })
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE routes
+       SET origin_office_id = $1, destination_office_id = $2,
+           distance_km = $3, base_price = $4, price_per_kg = $5
+       WHERE route_id = $6
+       RETURNING *`,
+      [origin_office_id, destination_office_id, distance_km || null, base_price || null, price_per_kg || null, id]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Route not found' })
+    }
+
+    res.json({ message: 'Route updated successfully', route: result.rows[0] })
+  } catch (error) {
+    console.error('Update route error:', error)
+    res.status(500).json({ message: 'Server error updating route' })
+  }
+}
+
+// ── DELETE /api/admin/routes/:id ──
+// Deletes a route
+const deleteRoute = async (req, res) => {
+  const { id } = req.params
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM routes WHERE route_id = $1 RETURNING route_id',
+      [id]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Route not found' })
+    }
+
+    res.json({ message: 'Route deleted successfully' })
+  } catch (error) {
+    console.error('Delete route error:', error)
+    res.status(500).json({ message: 'Server error deleting route' })
   }
 }
 
@@ -302,7 +408,7 @@ const getRoutes = async (req, res) => {
 const createRoute = async (req, res) => {
   const { origin_office_id, destination_office_id, distance_km, base_price, price_per_kg } = req.body
 
-  if (!origin_office_id || !destination_office_id) {
+  if (origin_office_id == null || destination_office_id == null) {
     return res.status(400).json({ message: 'Origin and destination offices are required' })
   }
 
@@ -351,11 +457,15 @@ module.exports = {
   getDashboardStats,
   getRoutes,
   createRoute,
+  updateRoute,
+  deleteRoute,
   updateClerk,
   deleteClerk,
   getAllClerks,
   createClerk,
   getAllOffices,
   createOffice,
+  updateOffice,
+  deleteOffice,
   getReports
 }
