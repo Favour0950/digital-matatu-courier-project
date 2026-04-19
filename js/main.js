@@ -246,7 +246,7 @@ if (loginForm) {
 
     try {
       // POST /api/auth/login — the backend checks credentials and returns a JWT token
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -356,7 +356,7 @@ async function loadClerkDashboard() {
     const token = sessionStorage.getItem('token')
 
     // use the clerk specific endpoint that returns only the data needed for the clerk dashboard
-     const response = await fetch('http://localhost:5000/api/clerk/stats', {
+     const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/clerk/stats', {
       headers: { 'Authorization': 'Bearer ' + token }
     })
 
@@ -420,7 +420,7 @@ if (registerForm) {
       const clerkOfficeId = sessionStorage.getItem('userOfficeId')
 
       // GET all routes, then filter to those starting from clerk's office
-      const response = await fetch('http://localhost:5000/api/admin/routes', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/routes', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -500,7 +500,7 @@ if (registerForm) {
     try {
       const token = sessionStorage.getItem('token')
 
-      const response = await fetch('http://localhost:5000/api/parcels', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/parcels', {
         method: 'POST',
         headers: {
           'Content-Type':  'application/json',
@@ -596,7 +596,7 @@ if (searchBtn) {
       const token = sessionStorage.getItem('token')
 
       // GET /api/parcels/:tracking_number — returns parcel + status history
-      const response = await fetch(`http://localhost:5000/api/parcels/${query}`, {
+      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/parcels/${query}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -724,7 +724,7 @@ if (statusSearchBtn) {
       const token = sessionStorage.getItem('token')
 
       // Reuse the search endpoint — same data we need
-      const response = await fetch(`http://localhost:5000/api/parcels/${query}`, {
+      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/parcels/${query}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -778,7 +778,7 @@ if (statusSearchBtn) {
         const token = sessionStorage.getItem('token')
 
         // PUT /api/parcels/:tracking_number/status
-        const response = await fetch(`http://localhost:5000/api/parcels/${currentTracking}/status`, {
+        const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/parcels/${currentTracking}/status`, {
           method: 'PUT',
           headers: {
             'Content-Type':  'application/json',
@@ -868,7 +868,7 @@ if (paymentSearchBtn) {
       const token = sessionStorage.getItem('token')
 
       // GET /api/payments/parcel/:tracking_number — returns parcel summary for payment form
-      const response = await fetch(`http://localhost:5000/api/payments/parcel/${query}`, {
+      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/payments/parcel/${query}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -936,7 +936,7 @@ if (paymentSearchBtn) {
         const tracking_number = document.getElementById('pay-tracking').textContent
 
         // POST /api/payments — saves the payment record to the database
-        const response = await fetch('http://localhost:5000/api/payments', {
+        const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/payments', {
           method: 'POST',
           headers: {
             'Content-Type':  'application/json',
@@ -999,7 +999,7 @@ if (parcelCanvas) {
       const token = sessionStorage.getItem('token')
 
       // Fetch the 4 summary numbers for the stat cards
-      const statsRes = await fetch('http://localhost:5000/api/admin/stats', {
+      const statsRes = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/stats', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const stats = await statsRes.json()
@@ -1015,7 +1015,7 @@ if (parcelCanvas) {
       }
 
       // Fetch parcel data for charts and top clerks table
-      const reportsRes = await fetch('http://localhost:5000/api/admin/reports', {
+      const reportsRes = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/reports', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const reportsData = await reportsRes.json()
@@ -1105,7 +1105,7 @@ if (parcelCanvas) {
       //fetch to get real clerks details
       let clerkDetails = []
       try {
-        const clerkRes = await fetch('http://localhost:5000/api/admin/clerks', {
+        const clerkRes = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/clerks', {
           headers: { 'Authorization': 'Bearer ' + token }
         })
         if (clerkRes.ok) clerkDetails = await clerkRes.json()
@@ -1152,7 +1152,7 @@ if (clerksTableBodyEl) {
   async function loadClerks() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('http://localhost:5000/api/admin/clerks', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/clerks', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -1248,7 +1248,7 @@ if (clerksTableBodyEl) {
   async function loadOfficesForDropdown(selectId) {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('http://localhost:5000/api/admin/offices', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const offices = await response.json()
@@ -1312,7 +1312,7 @@ if (clerksTableBodyEl) {
         const token = sessionStorage.getItem('token')
 
         // POST /api/admin/clerks — creates the clerk account
-        const response = await fetch('http://localhost:5000/api/admin/clerks', {
+        const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/clerks', {
           method: 'POST',
           headers: {
             'Content-Type':  'application/json',
@@ -1387,7 +1387,7 @@ if (clerksTableBodyEl) {
         const token = sessionStorage.getItem('token')
 
         // PUT /api/admin/clerks/:id — update the clerk (backend endpoint to add)
-        const response = await fetch(`http://localhost:5000/api/admin/clerks/${clerkId}`, {
+        const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/clerks/${clerkId}`, {
           method: 'PUT',
           headers: {
             'Content-Type':  'application/json',
@@ -1430,7 +1430,7 @@ if (clerksTableBodyEl) {
       const token = sessionStorage.getItem('token')
 
       // DELETE /api/admin/clerks/:id — remove the clerk (backend endpoint to add)
-      const response = await fetch(`http://localhost:5000/api/admin/clerks/${userId}`, {
+      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/clerks/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + token }
       })
@@ -1468,7 +1468,7 @@ if (officesGrid) {
   async function loadOffices() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('http://localhost:5000/api/admin/offices', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       _officesData = await response.json()
@@ -1517,7 +1517,7 @@ if (officesGrid) {
   async function loadRoutes() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('http://localhost:5000/api/admin/routes', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/routes', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       if (response.ok) {
@@ -1624,7 +1624,7 @@ if (officesGrid) {
       try {
         const token = sessionStorage.getItem('token')
 
-        const response = await fetch('http://localhost:5000/api/admin/offices', {
+        const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
           method: 'POST',
           headers: {
             'Content-Type':  'application/json',
@@ -1665,7 +1665,7 @@ if (officesGrid) {
   async function loadOfficesIntoRouteModal() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('http://localhost:5000/api/admin/offices', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const offices = await response.json()
@@ -1711,7 +1711,7 @@ if (officesGrid) {
       try {
         const token = sessionStorage.getItem('token')
 
-        const response = await fetch('http://localhost:5000/api/admin/routes', {
+        const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/routes', {
           method: 'POST',
           headers: {
             'Content-Type':  'application/json',
@@ -1776,7 +1776,7 @@ if (officesGrid) {
 
       try {
         const token = sessionStorage.getItem('token')
-        const response = await fetch(`http://localhost:5000/api/admin/offices/${officeId}`, {
+        const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/offices/${officeId}`, {
           method: 'PUT',
           headers: {
             'Content-Type':  'application/json',
@@ -1805,7 +1805,7 @@ if (officesGrid) {
   async function deleteOfficeFromBackend(officeId, officeName) {
     try {
       const token = sessionStorage.getItem('token')
-      const response = await fetch(`http://localhost:5000/api/admin/offices/${officeId}`, {
+      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/offices/${officeId}`, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + token }
       })
@@ -1836,7 +1836,7 @@ if (officesGrid) {
   async function loadOfficesIntoEditRouteModal() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('http://localhost:5000/api/admin/offices', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const offices = await response.json()
@@ -1876,7 +1876,7 @@ if (officesGrid) {
 
       try {
         const token = sessionStorage.getItem('token')
-        const response = await fetch(`http://localhost:5000/api/admin/routes/${routeId}`, {
+        const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/routes/${routeId}`, {
           method: 'PUT',
           headers: {
             'Content-Type':  'application/json',
@@ -1908,7 +1908,7 @@ if (officesGrid) {
   async function deleteRouteFromBackend(routeId) {
     try {
       const token = sessionStorage.getItem('token')
-      const response = await fetch(`http://localhost:5000/api/admin/routes/${routeId}`, {
+      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/routes/${routeId}`, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + token }
       })
@@ -1940,7 +1940,7 @@ if (generateBtn) {
   async function loadOfficeFilter() {
     try {
       const token = sessionStorage.getItem('token')
-      const response = await fetch('http://localhost:5000/api/admin/offices', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const offices = await response.json()
@@ -1956,7 +1956,7 @@ if (generateBtn) {
   async function loadClerksForFilter() {
     try {
       const token = sessionStorage.getItem('token')
-      const response = await fetch('http://localhost:5000/api/admin/clerks', {
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/clerks', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const clerks = await response.json()
@@ -1995,7 +1995,7 @@ if (generateBtn) {
       if (endDate) params.append('end_date', endDate)
       if (office_id) params.append('office_id', office_id)
 
-      const response = await fetch(`http://localhost:5000/api/admin/reports?${params.toString()}`, {
+      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/reports?${params.toString()}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
