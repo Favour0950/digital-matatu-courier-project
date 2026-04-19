@@ -89,12 +89,7 @@
                 <div class="form-group">
                 <label for="destination-office">Destination Office</label>
                 <select id="destination-office">
-                    <option value="">Select destination office</option>
-                    <option value="mombasa">Mombasa Central</option>
-                    <option value="kisumu">Kisumu Main</option>
-                    <option value="nakuru">Nakuru Office</option>
-                    <option value="eldoret">Eldoret Hub</option>
-                    <option value="nyeri">Nyeri Branch</option>
+                     <option value="">Loading destinations...</option>
                 </select>
                 <span class="error" id="destination-office-error"></span>
                 </div>
@@ -118,18 +113,7 @@
                     <span class="error" id="parcel-weight-error"></span>
                 </div>
 
-                <div class="form-group">
-                    <label for="parcel-route">Route</label>
-                    <select id="parcel-route">
-                    <option value="">-- Select route --</option>
-                    <option value="nbi-msa">Nairobi → Mombasa</option>
-                    <option value="nbi-kisumu">Nairobi → Kisumu</option>
-                    <option value="nbi-nakuru">Nairobi → Nakuru</option>
-                    <option value="nbi-eldoret">Nairobi → Eldoret</option>
-                    <option value="msa-nbi">Mombasa → Nairobi</option>
-                    </select>
-                    <span class="error" id="parcel-route-error"></span>
-                </div>
+                
                 <div class="estimated-cost-box">
                     <p class="cost-label">Estimated Cost</p>
                     <p class="cost-value" id="estimatedCost">KES 0</p>
@@ -166,6 +150,7 @@
             <p class="tracking-number" id="generatedTracking">PKG-0000-0000</p>
             <div class="success-actions">
                 <button class="btn-secondary" id="copyTrackingBtn">Copy Number</button>
+                <button class="btn-primary" id="goToPaymentBtn">Record Payment</button>
                 <button class="btn-primary" id="registerAnotherBtn">Register Another</button>
             </div>
             </div>

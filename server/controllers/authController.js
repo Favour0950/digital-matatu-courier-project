@@ -28,9 +28,9 @@ const login = async (req, res) => {
 
     // Create a JWT token containing user info
     const token = jwt.sign(
-      { user_id: user.user_id, role: user.role, name: user.name },
-      process.env.JWT_SECRET,
-      { expiresIn: '8h' }
+    { user_id: user.user_id, role: user.role, name: user.name, office_id: user.office_id },
+    process.env.JWT_SECRET,
+    { expiresIn: '8h' }
     )
 
     // Send token and user info back to frontend
@@ -38,7 +38,8 @@ const login = async (req, res) => {
       token,
       role: user.role,
       name: user.name,
-      email: user.email
+      email: user.email,
+      office_id: user.office_id
     })
 
   } catch (error) {

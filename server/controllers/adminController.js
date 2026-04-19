@@ -452,6 +452,56 @@ const deleteClerk = async (req, res) => {
     res.status(500).json({ message: 'Server error removing clerk' })
   }
 }
+// ── GET /api/clerk/stats — clerk dashboard data ──
+// Returns only parcels registered by this specific clerk
+const getClerkDashboardData = async (req, res) => {
+  const clerk_id = req.user.user_id  // from the JWT token
+
+  try {
+    const [statsResult, recentResult] = await Promise.all([
+      // Summary counts for this clerk's parcels
+      pool.query(`
+        SELECT
+          COUNT(*)                                                    AS total_parcels,
+          COALESCE(SUM(pay.amount), 0)                               AS total_revenue,
+          COUNT(CASE WHEN p.current_status IN ('Registered', 'Dispatched') THEN 1 END) AS pending_count,
+          COUNT(CASE WHEN p.current_status = 'Arrived' THEN 1 END)  AS arrived_count
+        FROM parcels p
+        LEFT JOIN payments pay ON p.parcel_id = pay.parcel_id
+        WHERE p.registered_by = $1
+      `, [clerk_id]),
+
+      // 5 most recent parcels registered by this clerk
+      pool.query(`
+        SELECT
+          p.tracking_number, p.current_status, p.created_at,
+          s.name AS sender_name,
+          r.name AS receiver_name,
+          o1.office_name AS origin_office,
+          o2.office_name AS destination_office
+        FROM parcels p
+        JOIN customers s  ON p.sender_id            = s.customer_id
+        JOIN customers r  ON p.receiver_id           = r.customer_id
+        JOIN offices   o1 ON p.origin_office_id      = o1.office_id
+        JOIN offices   o2 ON p.destination_office_id = o2.office_id
+        WHERE p.registered_by = $1
+        ORDER BY p.created_at DESC
+        LIMIT 5
+      `, [clerk_id])
+    ])
+
+    res.json({
+      stats:   statsResult.rows[0],
+      parcels: recentResult.rows
+    })
+
+  } catch (error) {
+    console.error('Clerk dashboard error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+}
+
+
 // Export all functions so routes can use them
 module.exports = {
   getDashboardStats,
@@ -467,5 +517,6 @@ module.exports = {
   createOffice,
   updateOffice,
   deleteOffice,
+  getClerkDashboardData,
   getReports
 }

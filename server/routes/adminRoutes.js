@@ -43,7 +43,7 @@ router.put('/offices/:id',  verifyToken, verifyAdmin, updateOffice)
 router.delete('/offices/:id', verifyToken, verifyAdmin, deleteOffice)
 
 // Route management
-router.get('/routes',      verifyToken, verifyAdmin, getRoutes)
+router.get('/routes', verifyToken, getRoutes)// both clerks and admins can see the routes, so we only use verifyToken here, not verifyAdmin
 router.post('/routes',     verifyToken, verifyAdmin, createRoute)
 router.put('/routes/:id',  verifyToken, verifyAdmin, updateRoute)
 router.delete('/routes/:id', verifyToken, verifyAdmin, deleteRoute)

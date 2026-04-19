@@ -269,6 +269,8 @@ if (loginForm) {
         sessionStorage.setItem('userRole',  data.role)
         sessionStorage.setItem('userName',  data.name)
         sessionStorage.setItem('token',     data.token)
+        // We also save the office_id to sessionStorage because it's needed for registering parcels and showing office-specific stats on the clerk dashboard
+        sessionStorage.setItem('userOfficeId', data.office_id)
 
         // Redirect to the correct dashboard based on role
         if (data.role === 'clerk') {
@@ -353,43 +355,28 @@ async function loadClerkDashboard() {
   try {
     const token = sessionStorage.getItem('token')
 
-    // Use the reports endpoint to get all parcels
-    // This works for both admin and clerk tokens
-    // If the clerk doesn't have permission, we silently keep the placeholder numbers
-    const response = await fetch('http://localhost:5000/api/admin/reports', {
+    // use the clerk specific endpoint that returns only the data needed for the clerk dashboard
+     const response = await fetch('http://localhost:5000/api/clerk/stats', {
       headers: { 'Authorization': 'Bearer ' + token }
     })
 
     if (!response.ok) return
-
     const data = await response.json()
 
     // Update the 4 stat card values
     // querySelectorAll gives us all .stat-value elements in order
     const statValues = document.querySelectorAll('.stat-card .stat-value')
     if (statValues.length >= 4) {
-      // Card 1: total parcels
-      statValues[0].textContent = data.summary.total_parcels
-
-      // Card 2: total revenue from payments
-      statValues[1].textContent = 'KES ' + Number(data.summary.total_revenue).toLocaleString()
-
-      // Card 3: count of parcels that are Registered or Dispatched (pending dispatch)
-      const pendingCount = data.parcels.filter(p =>
-        p.current_status === 'Registered' || p.current_status === 'Dispatched'
-      ).length
-      statValues[2].textContent = pendingCount
-
-      // Card 4: count of parcels that have Arrived
-      const arrivedCount = data.parcels.filter(p => p.current_status === 'Arrived').length
-      statValues[3].textContent = arrivedCount
+      statValues[0].textContent = data.stats.total_parcels
+      statValues[1].textContent = 'KES ' + Number(data.stats.total_revenue).toLocaleString()
+      statValues[2].textContent = data.stats.pending_count
+      statValues[3].textContent = data.stats.arrived_count
     }
 
     // Update the Live Feed table with the 5 most recent parcels
     const feedTbody = document.querySelector('.data-table tbody')
     if (feedTbody && data.parcels.length > 0) {
-      const recent = data.parcels.slice(0, 5)
-      feedTbody.innerHTML = recent.map(row => `
+      feedTbody.innerHTML = data.parcels.map(row => `
         <tr>
           <td>${row.tracking_number}</td>
           <td>${row.sender_name}</td>
@@ -423,39 +410,66 @@ if (registerForm) {
   const destOffice  = document.getElementById('destination-office')
   const costDisplay = document.getElementById('estimatedCost')
 
-  // Pricing table per destination — base fee + per-kg rate
-  // These match the routes in the database
-  const routePrices = {
-    mombasa: { base: 500, perKg: 50 },
-    kisumu:  { base: 400, perKg: 45 },
-    nakuru:  { base: 250, perKg: 35 },
-    eldoret: { base: 350, perKg: 40 },
-    nyeri:   { base: 250, perKg: 35 },
-  }
+   // Store routes fetched from the backend so we can look up pricing
+  let availableRoutes = []
 
-  function updateCost() {
-    const weight = parseFloat(weightInput.value) || 0
-    const dest   = destOffice.value
-    if (dest && routePrices[dest]) {
-      const price = routePrices[dest]
-      costDisplay.textContent = 'KES ' + (price.base + (weight * price.perKg)).toLocaleString()
-    } else {
-      costDisplay.textContent = 'KES 0'
+  // Load real routes from the backend, filtered to start from the clerk's office
+  async function loadDestinationRoutes() {
+    try {
+      const token        = sessionStorage.getItem('token')
+      const clerkOfficeId = sessionStorage.getItem('userOfficeId')
+
+      // GET all routes, then filter to those starting from clerk's office
+      const response = await fetch('http://localhost:5000/api/admin/routes', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+
+      if (!response.ok) return
+
+      const allRoutes = await response.json()
+
+      // Only show routes where origin matches the clerk's office
+      availableRoutes = allRoutes.filter(r => String(r.origin_office_id) === String(clerkOfficeId))
+
+      // Build the dropdown options from the filtered routes
+      if (destOffice) {
+        if (availableRoutes.length === 0) {
+          destOffice.innerHTML = '<option value="">No routes from your office yet</option>'
+        } else {
+          destOffice.innerHTML = '<option value="">-- Select destination --</option>' +
+            availableRoutes.map(r => `
+              <option value="${r.destination_office_id}">
+                ${r.origin_name} → ${r.destination_name}
+              </option>
+            `).join('')
+        }
+      }
+    } catch (error) {
+      console.error('Load routes error:', error)
     }
   }
 
-  weightInput.addEventListener('input', updateCost)
-  destOffice.addEventListener('change', updateCost)
+  // When destination changes, look up the route's base price and update cost display
+  function updateCost() {
+    const weight  = parseFloat(weightInput.value) || 0
+    const destId  = destOffice ? destOffice.value : ''
 
-  // Map the dropdown text value to the real office_id in the database
-  // Update these IDs whenever you add new offices
-  const officeIdMap = {
-    mombasa: 2,  // Mombasa Central
-    kisumu:  3,  // Kisumu Main
-    nakuru:  5,  // Nakuru Office
-    eldoret: 4,  // Eldoret Hub
-    nyeri:   6,  // Nyeri Branch (add if exists)
+    // Find the selected route in our fetched routes array
+    const route = availableRoutes.find(r => String(r.destination_office_id) === String(destId))
+
+    if (route && route.base_price) {
+      const total = parseFloat(route.base_price) + (weight * parseFloat(route.price_per_kg || 0))
+      if (costDisplay) costDisplay.textContent = 'KES ' + total.toLocaleString()
+    } else {
+      if (costDisplay) costDisplay.textContent = 'KES 0'
+    }
   }
+  if (weightInput) weightInput.addEventListener('input', updateCost)
+  if (destOffice)  destOffice.addEventListener('change', updateCost)
+
+  // Load routes when page opens
+  loadDestinationRoutes()
+  
 
   registerForm.addEventListener('submit', async function (event) {
     event.preventDefault()
@@ -498,7 +512,8 @@ if (registerForm) {
           sender_id_number:      senderId.value.trim(),
           receiver_name:         receiverName.value.trim(),
           receiver_phone:        receiverPhone.value.trim(),
-          destination_office_id: officeIdMap[destination.value] || 2,
+          // destination is now the actual office_id from the database
+          destination_office_id: parseInt(destination.value),
           description:           description.value.trim(),
           weight:                parseFloat(weight.value)
         })
@@ -532,14 +547,27 @@ if (registerForm) {
     })
   }
 
+  // After success — show button to go to Record Payment directly
+  const goToPaymentBtn = document.getElementById('goToPaymentBtn')
+  if (goToPaymentBtn) {
+    goToPaymentBtn.addEventListener('click', function () {
+      // Pass tracking number via sessionStorage so record-payment page can pre-fill it
+      const tracking = document.getElementById('generatedTracking').textContent
+      sessionStorage.setItem('pendingPaymentTracking', tracking)
+      window.location.href = 'record-payment.html'
+    })
+  }
+
+
   // Register Another button — resets form and hides success screen
   const registerAnotherBtn = document.getElementById('registerAnotherBtn')
   if (registerAnotherBtn) {
     registerAnotherBtn.addEventListener('click', function () {
       registerForm.reset()
-      if (costDisplay) costDisplay.textContent = 'KES 0'
       registerForm.style.display = 'block'
       document.getElementById('successCard').style.display = 'none'
+      if (costDisplay) costDisplay.textContent = 'KES 0'
+      loadDestinationRoutes() // reload routes for fresh form
     })
   }
 }
@@ -597,20 +625,45 @@ if (searchBtn) {
         // Each entry is one status change logged to parcel_status_history in the DB
         const timelineEl = document.getElementById('trackingTimeline')
         if (timelineEl) {
-          if (data.history.length > 0) {
-            timelineEl.innerHTML = data.history.map(entry => `
-              <div class="timeline-entry">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                  <p class="timeline-status">${entry.status}</p>
-                  <p class="timeline-note">${entry.notes || ''}</p>
-                  <p class="timeline-date">${new Date(entry.updated_at).toLocaleString()}</p>
-                </div>
-              </div>
-            `).join('')
-          } else {
-            timelineEl.innerHTML = '<p style="color:var(--muted); font-size:0.85rem;">No history recorded yet.</p>'
-          }
+         timelineEl.textContent = '' // clear previous results safely
+
+        if (data.history.length > 0) {
+          data.history.forEach(entry => {
+            // Build each element as a real DOM node, not a string
+            const entryDiv   = document.createElement('div')
+            entryDiv.className = 'timeline-entry'
+
+            const dot = document.createElement('div')
+            dot.className = 'timeline-dot'
+
+            const content = document.createElement('div')
+            content.className = 'timeline-content'
+
+            const statusP = document.createElement('p')
+            statusP.className   = 'timeline-status'
+            statusP.textContent = entry.status || ''  // textContent never executes HTML
+
+            const noteP = document.createElement('p')
+            noteP.className   = 'timeline-note'
+            noteP.textContent = entry.notes || ''
+
+            const dateP = document.createElement('p')
+            dateP.className   = 'timeline-date'
+            dateP.textContent = new Date(entry.updated_at).toLocaleString()
+
+            content.appendChild(statusP)
+            content.appendChild(noteP)
+            content.appendChild(dateP)
+            entryDiv.appendChild(dot)
+            entryDiv.appendChild(content)
+            timelineEl.appendChild(entryDiv)
+          })
+        } else {
+          const msg = document.createElement('p')
+          msg.style.color    = 'var(--muted)'
+          msg.style.fontSize = '0.85rem'
+          msg.textContent    = 'No history recorded yet.'
+          timelineEl.appendChild(msg)
         }
 
         resultsDiv.style.display = 'block'
@@ -619,7 +672,7 @@ if (searchBtn) {
         notFound.style.display = 'block'
       }
 
-    } catch (error) {
+    } }catch (error) {
       console.error('Search error:', error)
       notFound.style.display = 'block'
     }
@@ -779,6 +832,25 @@ if (statusSearchBtn) {
 const paymentSearchBtn = document.getElementById('paymentSearchBtn')
 
 if (paymentSearchBtn) {
+
+  // ── START OF AUTO-FILL LOGIC ──
+  const paymentSearchInput = document.getElementById('paymentSearchInput');
+  const pendingTracking = sessionStorage.getItem('pendingPaymentTracking');
+
+  if (paymentSearchInput && pendingTracking) {
+    // 1. Fill the input with the tracking number from registration
+    paymentSearchInput.value = pendingTracking;
+
+    // 2. Clear it so it doesn't auto-fill again on a manual refresh
+    sessionStorage.removeItem('pendingPaymentTracking');
+
+    // 3. Trigger the search function automatically
+    // We delay slightly to ensure the page is fully ready
+    setTimeout(() => {
+        findParcelForPayment();
+    }, 100);
+  }
+  // ── END OF AUTO-FILL LOGIC ──
 
   async function findParcelForPayment() {
     const query          = document.getElementById('paymentSearchInput').value.trim().toUpperCase()
@@ -1016,30 +1088,49 @@ if (parcelCanvas) {
 
       // ── Top Performing Clerks table ──
       // Count parcels registered by each clerk name, sort descending, show top 5
-      const clerkCounts = {}
+     const clerkStats = {}
       reportsData.parcels.forEach(parcel => {
         const clerk = parcel.registered_by
-        clerkCounts[clerk] = (clerkCounts[clerk] || 0) + 1
+        if (!clerkStats[clerk]) {
+          clerkStats[clerk] = { count: 0, revenue: 0 }
+        }
+        clerkStats[clerk].count += 1
+        // If your parcel data has an 'amount' or 'price' field, add it here:
+        clerkStats[clerk].revenue += parseFloat(parcel.amount_paid || 0) 
       })
 
-      const sortedClerks = Object.entries(clerkCounts)
-        .sort((a, b) => b[1] - a[1])
+      const sortedClerks = Object.entries(clerkStats)
+        .sort((a, b) => b[1].count - a[1].count)
         .slice(0, 5)
-
+      //fetch to get real clerks details
+      let clerkDetails = []
+      try {
+        const clerkRes = await fetch('http://localhost:5000/api/admin/clerks', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
+        if (clerkRes.ok) clerkDetails = await clerkRes.json()
+      } catch (e) {
+        console.log('Could not fetch clerk details for table')
+      }
+      
       const clerksTableBody = document.querySelector('.data-table tbody')
-      if (clerksTableBody && sortedClerks.length > 0) {
-        clerksTableBody.innerHTML = sortedClerks.map(([name, count], index) => `
+    if (clerksTableBody && sortedClerks.length > 0) {
+      clerksTableBody.innerHTML = sortedClerks.map(([name, stats], index) => {
+        const clerkInfo = clerkDetails.find(c => c.name === name)
+        const officeName = clerkInfo ? (clerkInfo.office_name || '—') : '—'
+        
+        return `
           <tr>
             <td><span class="rank-badge ${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}">#${index + 1}</span></td>
             <td>${name}</td>
-            <td>All Offices</td>
-            <td>${count}</td>
-            <td>—</td>
+            <td>${officeName}</td>
+            <td>${stats.count}</td>
+            <td>KES ${stats.revenue.toLocaleString()}</td> 
           </tr>
-        `).join('')
-      }
+        `
+      }).join('')
 
-    } catch (error) {
+    }} catch (error) {
       console.error('Admin dashboard error:', error)
     }
   }
@@ -1845,149 +1936,136 @@ if (officesGrid) {
 const generateBtn = document.getElementById('generateReportBtn')
 
 if (generateBtn) {
-
-  // Load real offices into the filter office dropdown
+  // 1. Load real offices into the filter
   async function loadOfficeFilter() {
     try {
-      const token    = sessionStorage.getItem('token')
+      const token = sessionStorage.getItem('token')
       const response = await fetch('http://localhost:5000/api/admin/offices', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const offices = await response.json()
-      const select  = document.getElementById('filterOffice')
+      const select = document.getElementById('filterOffice')
       if (select) {
         select.innerHTML = '<option value="">All Offices</option>' +
           offices.map(o => `<option value="${o.office_id}">${o.office_name}</option>`).join('')
       }
-    } catch (error) {
-      console.error('Load office filter error:', error)
-    }
+    } catch (error) { console.error('Load office filter error:', error) }
   }
 
-  // Load real clerks into the filter clerk dropdown
+  // 2. Load real clerks into the filter
   async function loadClerksForFilter() {
     try {
-      const token    = sessionStorage.getItem('token')
+      const token = sessionStorage.getItem('token')
       const response = await fetch('http://localhost:5000/api/admin/clerks', {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const clerks = await response.json()
-      const select  = document.getElementById('filterClerk')
+      const select = document.getElementById('filterClerk')
       if (select) {
         select.innerHTML = '<option value="">All Clerks</option>' +
           clerks.map(c => `<option value="${c.name}">${c.name}</option>`).join('')
       }
-    } catch (error) {
-      console.error('Load clerks filter error:', error)
-    }
+    } catch (error) { console.error('Load clerks filter error:', error) }
   }
 
-  // Generate Report — fetches filtered data from backend and renders it
+  // 3. THE REPAIRED GENERATE FUNCTION
   async function generateReport() {
-    try {
-      const token     = sessionStorage.getItem('token')
-      const startDate = document.getElementById('filterStartDate').value
-      const endDate   = document.getElementById('filterEndDate').value
-      const officeEl  = document.getElementById('filterOffice')
-      const clerkEl   = document.getElementById('filterClerk')
-      const office_id = officeEl ? officeEl.value : ''
-      const clerkName = clerkEl  ? clerkEl.value  : ''
+    const startDate = document.getElementById('filterStartDate').value
+    const endDate = document.getElementById('filterEndDate').value
 
-      // Build the URL query string — only include non-empty filters
+    // Validation
+    if (!startDate || !endDate) {
+      alert('Please select both a start date and an end date.')
+      return
+    }
+    if (new Date(startDate) > new Date(endDate)) {
+      alert('Start date cannot be after end date.')
+      return
+    }
+
+    try {
+      const token = sessionStorage.getItem('token')
+      const officeEl = document.getElementById('filterOffice')
+      const clerkEl = document.getElementById('filterClerk')
+      const office_id = officeEl ? officeEl.value : ''
+      const clerkName = clerkEl ? clerkEl.value : ''
+
       const params = new URLSearchParams()
       if (startDate) params.append('start_date', startDate)
-      if (endDate)   params.append('end_date',   endDate)
-      if (office_id) params.append('office_id',  office_id)
+      if (endDate) params.append('end_date', endDate)
+      if (office_id) params.append('office_id', office_id)
 
-      const response = await fetch(
-        `http://localhost:5000/api/admin/reports?${params.toString()}`, {
+      const response = await fetch(`http://localhost:5000/api/admin/reports?${params.toString()}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
       if (!response.ok) throw new Error('Report fetch failed')
-
       const data = await response.json()
 
-      // Apply clerk name filter on the frontend (backend filters by office + date)
       let displayParcels = data.parcels
       if (clerkName) {
         displayParcels = data.parcels.filter(p => p.registered_by === clerkName)
       }
 
-      // ── Update summary stat cards ──
+      // Update stats
       const s = data.summary
-      const setParcels = document.getElementById('rpt-parcels')
-      const setRevenue = document.getElementById('rpt-revenue')
-      const setArrived = document.getElementById('rpt-arrived')
-      const setClerks  = document.getElementById('rpt-clerks')
+      document.getElementById('rpt-parcels').textContent = displayParcels.length
+      document.getElementById('rpt-revenue').textContent = 'KES ' + Number(s.total_revenue).toLocaleString()
+      document.getElementById('rpt-arrived').textContent = displayParcels.filter(p => p.current_status === 'Arrived' || p.current_status === 'Collected').length
+      document.getElementById('rpt-clerks').textContent = new Set(displayParcels.map(p => p.registered_by)).size
 
-      if (setParcels) setParcels.textContent = displayParcels.length
-      if (setRevenue) setRevenue.textContent = 'KES ' + Number(s.total_revenue).toLocaleString()
-      if (setArrived) setArrived.textContent = displayParcels.filter(p => p.current_status === 'Arrived' || p.current_status === 'Collected').length
-      if (setClerks) {
-        const uniqueClerks = new Set(displayParcels.map(p => p.registered_by)).size
-        setClerks.textContent = uniqueClerks
-      }
-
-      // ── Update the manifest subtitle ──
-      const subtitle = document.getElementById('manifestSubtitle')
-      if (subtitle) {
-        subtitle.textContent = `Showing ${displayParcels.length} parcels` +
-          (startDate ? ` from ${startDate}` : '') +
-          (endDate   ? ` to ${endDate}`     : '')
-      }
-
-      // ── Build the manifest table ──
+      // Render table
       const tbody = document.getElementById('manifestTableBody')
-      if (tbody) {
-        if (displayParcels.length === 0) {
-          tbody.innerHTML = `
-            <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px;">
-              No records found for the selected filters.
-            </td></tr>`
-        } else {
-          tbody.innerHTML = displayParcels.map(row => `
+      tbody.innerHTML = displayParcels.length === 0 
+        ? '<tr><td colspan="8" style="text-align:center;padding:32px;">No records found.</td></tr>'
+        : displayParcels.map(row => `
             <tr>
               <td>${row.tracking_number}</td>
               <td>${row.sender_name}</td>
               <td>${row.receiver_name}</td>
               <td>${row.origin_office} → ${row.destination_office}</td>
-              <td>
-                <span class="badge ${getStatusBadgeClass(row.current_status)}">
-                  ${row.current_status}
-                </span>
-              </td>
+              <td><span class="badge ${getStatusBadgeClass(row.current_status)}">${row.current_status}</span></td>
               <td>KES ${Number(row.amount_charged).toLocaleString()}</td>
               <td>${row.registered_by}</td>
-              <td>${new Date(row.created_at).toLocaleDateString('en-GB', {
-                day: 'numeric', month: 'short', year: 'numeric'
-              })}</td>
-            </tr>
-          `).join('')
-        }
-      }
+              <td>${new Date(row.created_at).toLocaleDateString('en-GB')}</td>
+            </tr>`).join('')
 
-      // Show the results section (it starts hidden)
       document.getElementById('reportResults').style.display = 'block'
-
-    } catch (error) {
-      console.error('Reports error:', error)
-      alert('Could not generate report. Make sure the server is running.')
-    }
+    } catch (error) { console.error('Reports error:', error) }
   }
 
   generateBtn.addEventListener('click', generateReport)
 
-  // Export buttons — placeholder alerts until deployment
-  const exportPdf  = document.getElementById('exportPdfBtn')
-  const exportXls  = document.getElementById('exportExcelBtn')
+  // 4. Export Handlers
+  const exportPdf = document.getElementById('exportPdfBtn')
+  const exportXls = document.getElementById('exportExcelBtn')
   const downloadBtn = document.getElementById('downloadManifestBtn')
 
-  if (exportPdf)   exportPdf.addEventListener('click',   () => alert('PDF export will be available after deployment.'))
-  if (exportXls)   exportXls.addEventListener('click',   () => alert('Excel export will be available after deployment.'))
-  if (downloadBtn) downloadBtn.addEventListener('click', () => alert('Download will be available after deployment.'))
+  if (exportPdf) {
+    exportPdf.addEventListener('click', () => {
+      if (document.getElementById('reportResults').style.display === 'none') return alert('Generate a report first.')
+      window.print()
+    })
+  }
 
-  // Load filter dropdowns when the reports page opens
+  if (exportXls) {
+    exportXls.addEventListener('click', () => {
+      const tbody = document.getElementById('manifestTableBody')
+      if (!tbody || tbody.children.length === 0) return alert('Generate a report first.')
+      const headers = ['Tracking ID', 'Sender', 'Receiver', 'Route', 'Status', 'Amount', 'Clerk', 'Date']
+      const rows = Array.from(tbody.querySelectorAll('tr')).map(tr => 
+        Array.from(tr.querySelectorAll('td')).map(td => '"' + td.textContent.trim().replace(/"/g, '""') + '"').join(',')
+      )
+      const blob = new Blob([[headers.join(','), ...rows].join('\n')], { type: 'text/csv' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `report-${new Date().toISOString().split('T')[0]}.csv`
+      link.click()
+    })
+  }
+
+  if (downloadBtn) downloadBtn.addEventListener('click', () => exportXls && exportXls.click())
+
   loadOfficeFilter()
   loadClerksForFilter()
 }

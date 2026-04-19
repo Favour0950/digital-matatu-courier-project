@@ -17,7 +17,6 @@ const registerParcel = async (req, res) => {
   const registered_by = req.user.user_id
 
   try {
-
     // ── Step 1: Save or find the sender in the customers table ──
     // We check if this phone number already exists — no duplicate customers
     let senderResult = await pool.query(
@@ -26,10 +25,13 @@ const registerParcel = async (req, res) => {
     )
 
     let sender_db_id
-
     if (senderResult.rows.length > 0) {
       // Sender already exists — just use their existing ID
       sender_db_id = senderResult.rows[0].customer_id
+      await pool.query(
+      'UPDATE customers SET name = $1, national_id = $2 WHERE customer_id = $3',
+      [sender_name, sender_id_number, sender_db_id]
+    )
     } else {
       // Sender is new — insert them and get back their new ID
       const newSender = await pool.query(
@@ -45,11 +47,15 @@ const registerParcel = async (req, res) => {
       'SELECT * FROM customers WHERE phone_number = $1',
       [receiver_phone]
     )
-
     let receiver_db_id
 
     if (receiverResult.rows.length > 0) {
       receiver_db_id = receiverResult.rows[0].customer_id
+      // Update receiver name too
+      await pool.query(
+        'UPDATE customers SET name = $1 WHERE customer_id = $2',
+        [receiver_name, receiver_db_id]
+      )
     } else {
       const newReceiver = await pool.query(
         `INSERT INTO customers (name, phone_number) 
@@ -60,7 +66,6 @@ const registerParcel = async (req, res) => {
     }
 
     // ── Step 3: Generate a unique tracking number ──
-    // Format: PKG-2026-XXXX
     // Try up to MAX_ATTEMPTS times to find a number not already in the database.
     // Using a flag instead of checking inside the loop prevents continuing with
     // a duplicate if the loop exits for any other reason.
@@ -70,7 +75,7 @@ const registerParcel = async (req, res) => {
 
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       const year   = new Date().getFullYear()
-      const random = Math.floor(Math.random() * 9000) + 1000
+      const random = Math.floor(Math.random() * 90000) + 10000 // 5-digit random number
       const candidate = `PKG-${year}-${random}`
 
       // Check if this tracking number already exists
@@ -92,18 +97,35 @@ const registerParcel = async (req, res) => {
       return res.status(500).json({ message: 'Could not generate a unique tracking number. Please try again.' })
     }
 
-    // ── Step 4: Calculate estimated cost ──
-    // Simple formula for now — we'll improve this with real route pricing later
-    const base_price = 300
-    const per_kg_rate = 50
-    const amount_charged = base_price + (parseFloat(weight) * per_kg_rate)
-
-    // ── Step 5: Get the clerk's office as the origin office ──
+      // ── Step 5: Get the clerk's office as the origin office ──
     const clerkResult = await pool.query(
       'SELECT office_id FROM users WHERE user_id = $1',
       [registered_by]
     )
     const origin_office_id = clerkResult.rows[0].office_id
+
+        //new step 5 previous step 4
+    // ── Step 4: Calculate estimated cost ──
+    // // Simple formula for now — we'll improve this with real route pricing later
+    // const base_price = 300
+    // const per_kg_rate = 50
+    // const amount_charged = base_price + (parseFloat(weight) * per_kg_rate)
+// ── Step 4: Calculate actual cost from routes table ──
+      let amount_charged;
+      const routeResult = await pool.query(
+        `SELECT base_price, price_per_kg FROM routes 
+        WHERE origin_office_id = $1 AND destination_office_id = $2`,
+        [origin_office_id, destination_office_id]
+      );
+
+      
+      if (routeResult.rows.length > 0) {
+        const route = routeResult.rows[0];
+        amount_charged = parseFloat(route.base_price) + (parseFloat(weight) * parseFloat(route.price_per_kg || 0));
+      } else {
+        // Fallback if no route is found (though the UI should prevent this)
+        amount_charged = 500; 
+      }
 
     // ── Step 6: Save the parcel record ──
     const parcelResult = await pool.query(
@@ -120,6 +142,8 @@ const registerParcel = async (req, res) => {
     )
 
     const parcel = parcelResult.rows[0]
+
+
 
     // ── Step 7: Log the initial status in parcel_status_history ──
     // Every status change gets recorded — this is the first one: Registered

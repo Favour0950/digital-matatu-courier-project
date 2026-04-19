@@ -499,3 +499,15 @@ body.app{
   }
   
 }
+/* Print styles — hides navigation and shows only the report table */
+@media print {
+  .sidebar, .mobile-topbar, .report-filters-row, .report-btn-row, .page-header {
+    display: none !important;
+  }
+  .main-content {
+    padding: 0 !important;
+  }
+  body, .main-content {
+    background: white !important;
+  }
+}
