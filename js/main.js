@@ -801,6 +801,12 @@ if (statusSearchBtn) {
             notes:  notes ? notes.value.trim() : ''
           })
         })
+        // --- ADD THIS SECTION HERE ---
+        if (response.status === 402) {
+        // If payment is required, show the modal instead of an error message
+        showPaymentModal(currentTracking)
+        return
+        } // ------------------------------
 
         const data = await response.json()
 
@@ -832,6 +838,24 @@ if (statusSearchBtn) {
       document.getElementById('updateNotFound').style.display = 'none'
       currentTracking = null
     })
+  }
+  // --- Modal Helpers ---
+  function showPaymentModal(tracking) {
+      const modal = document.getElementById('paymentModal');
+      const payBtn = document.getElementById('goToPaymentBtn');
+      if (modal && payBtn) {
+          modal.style.display = 'flex';
+          payBtn.onclick = () => {
+              // Redirect to record payment page with the tracking number in URL
+              window.location.href = `record-payment.html?tracking=${tracking}`;
+          };
+      }
+  }
+
+  // Make closePaymentModal available to the "Cancel" button
+  window.closePaymentModal = function() {
+      const modal = document.getElementById('paymentModal');
+      if (modal) modal.style.display = 'none';
   }
 }
 
