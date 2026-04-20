@@ -7,13 +7,18 @@ require('dotenv').config()
 const login = async (req, res) => {
   const { email, password } = req.body
 
+  // TEMPORARY DEBUG — remove after fixing
+  console.log('Login attempt for:', email)
+
   try {
-    // Find user by email in database
     const result = await pool.query(
       'SELECT * FROM users WHERE email = $1', [email]
     )
 
-    // If no user found, reject
+    // TEMPORARY DEBUG — shows how many rows were found
+    console.log('Users found:', result.rows.length)
+    console.log('DB connected to:', pool.options?.connectionString ? 'Render' : 'Local')
+
     if (result.rows.length === 0) {
       return res.status(401).json({ message: 'Invalid email or password' })
     }
