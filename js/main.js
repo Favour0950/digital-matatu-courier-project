@@ -258,8 +258,21 @@ if (loginForm) {
       const data = await response.json()
 
       if (response.ok) {
+
         // Check the role selected on the form matches what's stored in the database
-        if (data.role !== role.value) {
+        // if (data.role !== role.value) {
+        //   emailError.textContent = 'Role does not match this account.'
+        //   return
+        // }
+        // Normalize both roles to lowercase to avoid "Admin" vs "admin" issues
+        const dbRole = data.role.toLowerCase();
+        const selectedRole = role.value.toLowerCase();
+
+        // Check if both are "admin" or "administrator"
+        const isAdminMatch = (dbRole === 'admin' || dbRole === 'administrator') && 
+                            (selectedRole === 'admin' || selectedRole === 'administrator');
+
+        if (dbRole !== selectedRole && !isAdminMatch) {
           emailError.textContent = 'Role does not match this account.'
           return
         }
@@ -273,7 +286,7 @@ if (loginForm) {
         sessionStorage.setItem('userOfficeId', data.office_id)
 
         // Redirect to the correct dashboard based on role
-        if (data.role === 'clerk') {
+        if (dbRole === 'clerk') {
           window.location.href = 'dashboard-clerk.html'
         } else {
           window.location.href = 'dashboard-admin.html'
