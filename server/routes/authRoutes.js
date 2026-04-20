@@ -1,8 +1,9 @@
 const express = require('express')
 const router = express.Router()
-const { login } = require('../controllers/authController')
+const { login, changePassword } = require('../controllers/authController')
+const { verifyToken } = require('../middleware/authMiddleware')
 
-// POST /api/auth/login
 router.post('/login', login)
+router.put('/change-password', verifyToken, changePassword)
 
 module.exports = router

@@ -195,7 +195,6 @@ let _clerksData  = []
 let _officesData = []
 let _routesData  = []
 
-
 // ============================================================
 // SECTION 3: LOGIN PAGE (index.html)
 // ============================================================
@@ -2081,4 +2080,60 @@ if (generateBtn) {
 
   loadOfficeFilter()
   loadClerksForFilter()
+}
+// ============================================================
+// SECTION 14: CHANGE PASSWORD (dashboard-clerk.html)
+// ============================================================
+
+const changePasswordBtn = document.getElementById('changePasswordBtn')
+if (changePasswordBtn) {
+  changePasswordBtn.addEventListener('click', () => {
+    document.getElementById('changePasswordModal').classList.remove('modal-hidden')
+  })
+}
+
+const closeChangePwd  = document.getElementById('closeChangePassword')
+const cancelChangePwd = document.getElementById('cancelChangePassword')
+if (closeChangePwd)  closeChangePwd.addEventListener('click',  () => document.getElementById('changePasswordModal').classList.add('modal-hidden'))
+if (cancelChangePwd) cancelChangePwd.addEventListener('click', () => document.getElementById('changePasswordModal').classList.add('modal-hidden'))
+
+const submitChangePwd = document.getElementById('submitChangePassword')
+if (submitChangePwd) {
+  submitChangePwd.addEventListener('click', async function () {
+    const current = document.getElementById('currentPassword')
+    const newPwd  = document.getElementById('newPassword')
+    const confirm = document.getElementById('confirmPassword')
+    const currErr = document.getElementById('currentPassword-error')
+    const newErr  = document.getElementById('newPassword-error')
+    const confErr = document.getElementById('confirmPassword-error')
+
+    currErr.textContent = ''
+    newErr.textContent  = ''
+    confErr.textContent = ''
+
+    let valid = true
+    if (!current.value)             { currErr.textContent = 'Current password is required.';        valid = false }
+    if (newPwd.value.length < 8)    { newErr.textContent  = 'Must be at least 8 characters.';       valid = false }
+    if (newPwd.value !== confirm.value) { confErr.textContent = 'Passwords do not match.';          valid = false }
+    if (!valid) return
+
+    try {
+      const token    = sessionStorage.getItem('token')
+      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/auth/change-password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ currentPassword: current.value, newPassword: newPwd.value })
+      })
+      const data = await response.json()
+      if (response.ok) {
+        alert('Password changed successfully!')
+        document.getElementById('changePasswordModal').classList.add('modal-hidden')
+        current.value = ''; newPwd.value = ''; confirm.value = ''
+      } else {
+        currErr.textContent = data.message || 'Update failed.'
+      }
+    } catch (error) {
+      console.error('Change password error:', error)
+    }
+  })
 }
