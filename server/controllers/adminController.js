@@ -68,10 +68,15 @@ const getAllClerks = async (req, res) => {
         u.role,
         u.created_at,
         u.office_id,
-        o.office_name
+        o.office_name,
+        u.is_active,
+        --count parcels by that clerk
+        COUNT(p.parcel_id) AS parcel_count
       FROM users u
       LEFT JOIN offices o ON u.office_id = o.office_id
+      LEFT JOIN parcels p ON p.registered_by = u.user_id
       WHERE u.role = 'clerk'
+      GROUP BY u.user_id, o.office_name
       ORDER BY u.created_at DESC
     `)
 
@@ -444,14 +449,36 @@ const updateClerk = async (req, res) => {
 // DELETE /api/admin/clerks/:id — remove a clerk account
 const deleteClerk = async (req, res) => {
   const { id } = req.params
+  
   try {
-    await pool.query('DELETE FROM users WHERE user_id = $1 AND role = $2', [id, 'clerk'])
-    res.json({ message: 'Clerk removed successfully' })
+    // Soft delete — set is_active = false instead of removing the row
+    // This preserves all parcel history linked to this clerk
+    await pool.query(
+      'UPDATE users SET is_active = false WHERE user_id = $1 AND role = $2',
+      [id, 'clerk']
+    )
+    res.json({ message: 'Clerk deactivated successfully' })
   } catch (error) {
-    console.error('Delete clerk error:', error)
-    res.status(500).json({ message: 'Server error removing clerk' })
+    console.error('Deactivate clerk error:', error)
+    res.status(500).json({ message: 'Server error' })
   }
 }
+
+
+
+
+// PUT /api/admin/clerks/:id/reactivate
+const reactivateClerk = async (req, res) => {
+  const { id } = req.params
+  try {
+    await pool.query('UPDATE users SET is_active = true WHERE user_id = $1', [id])
+    res.json({ message: 'Clerk reactivated' })
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' })
+  }
+}
+
+
 // ── GET /api/clerk/stats — clerk dashboard data ──
 // Returns only parcels registered by this specific clerk
 const getClerkDashboardData = async (req, res) => {
@@ -518,5 +545,6 @@ module.exports = {
   updateOffice,
   deleteOffice,
   getClerkDashboardData,
+  reactivateClerk,
   getReports
 }

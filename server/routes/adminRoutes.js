@@ -16,6 +16,7 @@ const {
   updateRoute,
   deleteRoute,
   updateClerk,
+  reactivateClerk,
   deleteClerk
 
 } = require('../controllers/adminController')
@@ -34,7 +35,7 @@ router.get('/stats',   verifyToken, verifyAdmin, getDashboardStats)
 // Clerk management
 router.get('/clerks',  verifyToken, verifyAdmin, getAllClerks)
 router.post('/clerks', verifyToken, verifyAdmin, createClerk)
-
+router.put('/clerks/:id/reactivate', verifyToken, verifyAdmin, reactivateClerk)
 
 // Office management
 router.get('/offices',      verifyToken, verifyAdmin, getAllOffices)

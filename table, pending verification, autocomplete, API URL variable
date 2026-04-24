@@ -1,0 +1,184 @@
+[33mcommit 01135ebbd2b2ad355f07766e4702f88a5e5ce1e6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Mon Apr 20 12:22:33 2026 +0300
+
+    feat: complete issues 10-18 — route edit/delete, clerk management, change password, payment modal, SMS integration, report exports
+
+[33mcommit 844a91dc709aed1d67177a1c0a384e279ed247d3[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Mon Apr 20 09:09:07 2026 +0300
+
+    Complete issues 10, 11, 13 — route edit/delete, clerk management, change password
+
+[33mcommit 1fc0405489bd4db4e9c944149d5145d4a583b8b9[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Mon Apr 20 05:42:52 2026 +0300
+
+    Debug: add login logs
+
+[33mcommit c0a22ae7059089be93b55542c7706b9bd98c10ef[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Mon Apr 20 05:21:33 2026 +0300
+
+    Fix: Role matching logic for login
+
+[33mcommit c4d7a4d9dce3c841caa80f1fb69bd2bcd894673d[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sun Apr 19 19:20:36 2026 +0300
+
+    Chore: Update API URL to live Render backend
+
+[33mcommit 734abd68bdfb16da7809701d8d0d85d1466dc951[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sun Apr 19 18:58:15 2026 +0300
+
+    Chore: update db.js to support Render DATABASE_URL
+
+[33mcommit 510653a83346f0892a87c1fe6bb688c5145b7bef[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sun Apr 19 18:35:04 2026 +0300
+
+    Fix: Completed clerk operations, reports, and database synchronization
+
+[33mcommit ba91761500042274c448d09e2ec167b4ff140b4f[m
+Merge: 3c2cd62 4f98661
+Author: Favour0950 <160720823+Favour0950@users.noreply.github.com>
+Date:   Sun Apr 19 10:57:33 2026 +0300
+
+    Merge pull request #3 from Favour0950/copilot/investigate-offices-and-routes-editability
+
+[33mcommit 3c2cd628e6bf294997a2ac9197c300dcd0a0a9d3[m
+Merge: 224d589 a3ef510
+Author: Favour0950 <160720823+Favour0950@users.noreply.github.com>
+Date:   Sat Apr 18 22:37:13 2026 +0300
+
+    Merge pull request #2 from Favour0950/Violet/week-9/commits
+    
+    Violet/week 9/commits
+
+[33mcommit a3ef510a2331decbc90d526c9a7aa07bbe84205e[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 19:32:39 2026 +0000
+
+    Fix hardcoded placeholder data, tracking number generator, and dynamic office/route counts
+    
+    Agent-Logs-Url: https://github.com/Favour0950/digital-matatu-courier-project/sessions/22979d35-5c99-4606-9832-db6c7e1e8aab
+    
+    Co-authored-by: Favour0950 <160720823+Favour0950@users.noreply.github.com>
+
+[33mcommit 3825847979eaf0198d803737a18b57ff7d86c673[m
+Author: Favour0950 <160720823+Favour0950@users.noreply.github.com>
+Date:   Sat Apr 18 22:28:13 2026 +0300
+
+    Update server/controllers/statusController.js
+    
+    Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
+
+[33mcommit 0b132c6d226dcd7afce171a3625485551f78c2e5[m
+Author: Favour0950 <160720823+Favour0950@users.noreply.github.com>
+Date:   Sat Apr 18 22:26:30 2026 +0300
+
+    Update js/main.js
+    
+    Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
+
+[33mcommit 4f98661b02ca58f357e4f6edbc0bb8fd6cb2aaa3[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sat Apr 18 19:26:02 2026 +0000
+
+    fix: correct admin dashboard link to offices and routes page
+    
+    Agent-Logs-Url: https://github.com/Favour0950/digital-matatu-courier-project/sessions/8d7c13b5-dc4e-4339-9ce9-e3847ed2372a
+    
+    Co-authored-by: Favour0950 <160720823+Favour0950@users.noreply.github.com>
+
+[33mcommit f946063985cf763bf5ca1b94b60766eedbda092a[m
+Author: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+Date:   Sun Apr 12 08:35:39 2026 +0000
+
+    Fix edit and deactivate buttons/modals for manage users, offices, and routes
+    
+    Agent-Logs-Url: https://github.com/Favour0950/digital-matatu-courier-project/sessions/e88e9124-05a3-4af4-b617-78dd8c2b1ac0
+    
+    Co-authored-by: Favour0950 <160720823+Favour0950@users.noreply.github.com>
+
+[33mcommit 9955f703de199188c2ce6435f3d4ff2e3daa75b6[m
+Author: Favour0950 <160720823+Favour0950@users.noreply.github.com>
+Date:   Sun Apr 12 11:32:46 2026 +0300
+
+    Update server/controllers/adminController.js
+    
+    Co-authored-by: Copilot <175728472+Copilot@users.noreply.github.com>
+
+[33mcommit 3b854d0ba2345b92c10af31b765770138f4e6b28[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sun Apr 12 11:22:04 2026 +0300
+
+    Backend bugs fixed for some
+
+[33mcommit 165f0e9248f9ebcccb44d038c667fe87395da452[m[33m ([m[1;31morigin/Violet/week-8commits[m[33m, [m[1;32mViolet/week-8commits[m[33m)[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sun Apr 12 00:33:39 2026 +0300
+
+    admin backend connected to frontend, basic pages working
+
+[33mcommit 224d5891770f852bab51d4ee9bb86b53cd2ea723[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sat Apr 11 07:24:11 2026 +0300
+
+    Backend foundation complete — auth and parcel registration endpoints working
+
+[33mcommit 48deea21c7ccd573d3b8109e2e1f0b134ecd9363[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sun Apr 5 23:57:54 2026 +0300
+
+    finished on admin frontend part
+
+[33mcommit 8aa25d733710f3c7682dad18c30508ff9e60c899[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sun Apr 5 17:44:29 2026 +0300
+
+    Add parcel pages, UI styles, and JS logic
+
+[33mcommit 03f648fe42b3fd3bcc0a3b30027e692e3a3026e6[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Fri Mar 27 19:12:04 2026 +0300
+
+    fixed the register parcel bug
+
+[33mcommit 4019f66a4a7a6430b8ff9e9acfe3ba875ae0044d[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Fri Mar 27 18:17:44 2026 +0300
+
+    added dashboard and register parcel form
+
+[33mcommit 88c7aa6c97e2adf476365577e6935b3b714e3263[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Wed Mar 25 01:19:42 2026 +0300
+
+    working on clerk dashoard
+
+[33mcommit 6c1298bce1d2108f52f6f457558567b16de1a52f[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Mon Mar 23 10:15:17 2026 +0300
+
+    login page html, css and js added
+
+[33mcommit 645cb48aa660f33797b28d35757a5d669c288e48[m
+Merge: 8e9c119 3b025e0
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sun Mar 22 15:32:06 2026 +0300
+
+    Merge branch 'main' of https://github.com/Favour0950/digital-matatu-courier-project
+
+[33mcommit 8e9c1197d4ac35bb5e0c7e94b2ad98274d29344a[m
+Author: Favour0950 <vonyango490@gmail.com>
+Date:   Sun Mar 22 15:18:39 2026 +0300
+
+    frontend file structure
+
+[33mcommit 3b025e016d3c801658f8f3859e9515631f8a092a[m
+Author: Favour0950 <160720823+Favour0950@users.noreply.github.com>
+Date:   Sun Mar 22 15:07:04 2026 +0300
+
+    Initial commit

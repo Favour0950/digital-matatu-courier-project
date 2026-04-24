@@ -5,6 +5,7 @@
 // All dummy data and old commented code has been removed.
 // ============================================================
 
+const API = 'https://digital-matatu-courier-project.onrender.com'
 
 // ============================================================
 // SECTION 1: SHARED HELPER FUNCTIONS
@@ -144,6 +145,20 @@ window.deactivateClerk = function (index) {
     deleteClerkFromBackend(clerk.user_id, clerk.name)
   }
 }
+window.reactivateClerk = async function(index) {
+  const clerk = _clerksData[index]
+  if (!clerk) return
+  if (!confirm('Reactivate ' + clerk.name + '?')) return
+  try {
+    const token = sessionStorage.getItem('token')
+    const response = await fetch(`${API}/api/admin/clerks/${clerk.user_id}/reactivate`, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    if (response.ok) { await loadClerks() }
+    else { alert('Could not reactivate clerk.') }
+  } catch (error) { console.error('Reactivate error:', error) }
+}
 
 window.editOffice = function (index) {
   const office = _officesData[index]
@@ -245,7 +260,7 @@ if (loginForm) {
 
     try {
       // POST /api/auth/login — the backend checks credentials and returns a JWT token
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/auth/login', {
+      const response = await fetch(`${API}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -368,7 +383,7 @@ async function loadClerkDashboard() {
     const token = sessionStorage.getItem('token')
 
     // use the clerk specific endpoint that returns only the data needed for the clerk dashboard
-     const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/clerk/stats', {
+     const response = await fetch(`${API}/api/clerk/stats`, {
       headers: { 'Authorization': 'Bearer ' + token }
     })
 
@@ -432,7 +447,7 @@ if (registerForm) {
       const clerkOfficeId = sessionStorage.getItem('userOfficeId')
 
       // GET all routes, then filter to those starting from clerk's office
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/routes', {
+      const response = await fetch(`${API}/api/admin/routes`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -512,7 +527,7 @@ if (registerForm) {
     try {
       const token = sessionStorage.getItem('token')
 
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/parcels', {
+      const response = await fetch(`${API}/api/parcels`, {
         method: 'POST',
         headers: {
           'Content-Type':  'application/json',
@@ -608,7 +623,7 @@ if (searchBtn) {
       const token = sessionStorage.getItem('token')
 
       // GET /api/parcels/:tracking_number — returns parcel + status history
-      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/parcels/${query}`, {
+      const response = await fetch(`${API}/api/parcels/${query}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -736,7 +751,7 @@ if (statusSearchBtn) {
       const token = sessionStorage.getItem('token')
 
       // Reuse the search endpoint — same data we need
-      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/parcels/${query}`, {
+      const response = await fetch(`${API}/api/parcels/${query}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -790,7 +805,7 @@ if (statusSearchBtn) {
         const token = sessionStorage.getItem('token')
 
         // PUT /api/parcels/:tracking_number/status
-        const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/parcels/${currentTracking}/status`, {
+        const response = await fetch(`${API}/api/parcels/${currentTracking}/status`, {
           method: 'PUT',
           headers: {
             'Content-Type':  'application/json',
@@ -904,7 +919,7 @@ if (paymentSearchBtn) {
       const token = sessionStorage.getItem('token')
 
       // GET /api/payments/parcel/:tracking_number — returns parcel summary for payment form
-      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/payments/parcel/${query}`, {
+      const response = await fetch(`${API}/api/payments/parcel/${query}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -972,7 +987,7 @@ if (paymentSearchBtn) {
         const tracking_number = document.getElementById('pay-tracking').textContent
 
         // POST /api/payments — saves the payment record to the database
-        const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/payments', {
+        const response = await fetch(`${API}/api/payments`, {
           method: 'POST',
           headers: {
             'Content-Type':  'application/json',
@@ -1035,7 +1050,7 @@ if (parcelCanvas) {
       const token = sessionStorage.getItem('token')
 
       // Fetch the 4 summary numbers for the stat cards
-      const statsRes = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/stats', {
+      const statsRes = await fetch(`${API}/api/admin/stats`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const stats = await statsRes.json()
@@ -1051,7 +1066,7 @@ if (parcelCanvas) {
       }
 
       // Fetch parcel data for charts and top clerks table
-      const reportsRes = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/reports', {
+      const reportsRes = await fetch(`${API}/api/admin/reports`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const reportsData = await reportsRes.json()
@@ -1141,7 +1156,7 @@ if (parcelCanvas) {
       //fetch to get real clerks details
       let clerkDetails = []
       try {
-        const clerkRes = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/clerks', {
+        const clerkRes = await fetch(`${API}/api/admin/clerks`, {
           headers: { 'Authorization': 'Bearer ' + token }
         })
         if (clerkRes.ok) clerkDetails = await clerkRes.json()
@@ -1188,7 +1203,7 @@ if (clerksTableBodyEl) {
   async function loadClerks() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/clerks', {
+      const response = await fetch(`${API}/api/admin/clerks`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -1236,14 +1251,21 @@ if (clerksTableBodyEl) {
         </td>
         <td>${clerk.email}</td>
         <td>${clerk.office_name || '—'}</td>
-        <td><span class="badge badge-active">Active</span></td>
-        <td>—</td>
+        <td>
+        <span class="badge ${clerk.is_active === false ? 'badge-pending' : 'badge-active'}">
+          ${clerk.is_active === false ? 'Inactive' : 'Active'}
+        </span>
+      </td>
+        <td>${clerk.parcel_count || 0}</td>
         <td>
           <div class="actions-wrapper" data-index="${index}">
             <button class="btn-actions">···</button>
             <div class="actions-dropdown">
               <button onclick="editClerk(${index})">✏️ Edit</button>
-              <button class="danger" onclick="deactivateClerk(${index})">🚫 Deactivate</button>
+              <button class="${clerk.is_active === false ? '' : 'danger'}" 
+                      onclick="${clerk.is_active === false ? 'reactivateClerk' : 'deactivateClerk'}(${index})">
+                ${clerk.is_active === false ? '✅ Reactivate' : '🚫 Deactivate'}
+              </button>
             </div>
           </div>
         </td>
@@ -1261,12 +1283,15 @@ if (clerksTableBodyEl) {
     const pendingEl = document.getElementById('pendingClerksCount')
 
     if (totalEl)   totalEl.textContent   = data.length
-    if (activeEl)  activeEl.textContent  = data.length
-    if (pendingEl) pendingEl.textContent = 0
+    // Active = clerks where is_active is not false
+    if (activeEl)  activeEl.textContent  = data.filter(c => c.is_active !== false).length
+    // Pending = deactivated clerks
+    if (pendingEl) pendingEl.textContent = data.filter(c => c.is_active === false).length
   }
 
   // ── Live search — filters table as clerk types ──
   const clerkSearchInput = document.getElementById('clerkSearchInput')
+  if (clerkSearchInput) clerkSearchInput.value = ''
   if (clerkSearchInput) {
     clerkSearchInput.addEventListener('input', function () {
       const query    = this.value.toLowerCase()
@@ -1284,7 +1309,7 @@ if (clerksTableBodyEl) {
   async function loadOfficesForDropdown(selectId) {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
+      const response = await fetch(`${API}/api/admin/offices`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const offices = await response.json()
@@ -1348,7 +1373,7 @@ if (clerksTableBodyEl) {
         const token = sessionStorage.getItem('token')
 
         // POST /api/admin/clerks — creates the clerk account
-        const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/clerks', {
+        const response = await fetch(`${API}/api/admin/clerks`, {
           method: 'POST',
           headers: {
             'Content-Type':  'application/json',
@@ -1423,7 +1448,7 @@ if (clerksTableBodyEl) {
         const token = sessionStorage.getItem('token')
 
         // PUT /api/admin/clerks/:id — update the clerk (backend endpoint to add)
-        const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/clerks/${clerkId}`, {
+        const response = await fetch(`${API}/api/admin/clerks/${clerkId}`, {
           method: 'PUT',
           headers: {
             'Content-Type':  'application/json',
@@ -1466,7 +1491,7 @@ if (clerksTableBodyEl) {
       const token = sessionStorage.getItem('token')
 
       // DELETE /api/admin/clerks/:id — remove the clerk (backend endpoint to add)
-      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/clerks/${userId}`, {
+      const response = await fetch(`${API}/api/admin/clerks/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + token }
       })
@@ -1504,7 +1529,7 @@ if (officesGrid) {
   async function loadOffices() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
+      const response = await fetch(`${API}/api/admin/offices`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       _officesData = await response.json()
@@ -1553,7 +1578,7 @@ if (officesGrid) {
   async function loadRoutes() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/routes', {
+      const response = await fetch(`${API}/api/admin/routes`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       if (response.ok) {
@@ -1660,7 +1685,7 @@ if (officesGrid) {
       try {
         const token = sessionStorage.getItem('token')
 
-        const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
+        const response = await fetch(`${API}/api/admin/offices`, {
           method: 'POST',
           headers: {
             'Content-Type':  'application/json',
@@ -1701,7 +1726,7 @@ if (officesGrid) {
   async function loadOfficesIntoRouteModal() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
+      const response = await fetch(`${API}/api/admin/offices`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const offices = await response.json()
@@ -1747,7 +1772,7 @@ if (officesGrid) {
       try {
         const token = sessionStorage.getItem('token')
 
-        const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/routes', {
+        const response = await fetch(`${API}/api/admin/routes`, {
           method: 'POST',
           headers: {
             'Content-Type':  'application/json',
@@ -1812,7 +1837,7 @@ if (officesGrid) {
 
       try {
         const token = sessionStorage.getItem('token')
-        const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/offices/${officeId}`, {
+        const response = await fetch(`${API}/api/admin/offices/${officeId}`, {
           method: 'PUT',
           headers: {
             'Content-Type':  'application/json',
@@ -1841,7 +1866,7 @@ if (officesGrid) {
   async function deleteOfficeFromBackend(officeId, officeName) {
     try {
       const token = sessionStorage.getItem('token')
-      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/offices/${officeId}`, {
+      const response = await fetch(`${API}/api/admin/offices/${officeId}`, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + token }
       })
@@ -1872,7 +1897,7 @@ if (officesGrid) {
   async function loadOfficesIntoEditRouteModal() {
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
+      const response = await fetch(`${API}/api/admin/offices`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const offices = await response.json()
@@ -1912,7 +1937,7 @@ if (officesGrid) {
 
       try {
         const token = sessionStorage.getItem('token')
-        const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/routes/${routeId}`, {
+        const response = await fetch(`${API}/api/admin/routes/${routeId}`, {
           method: 'PUT',
           headers: {
             'Content-Type':  'application/json',
@@ -1944,7 +1969,7 @@ if (officesGrid) {
   async function deleteRouteFromBackend(routeId) {
     try {
       const token = sessionStorage.getItem('token')
-      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/routes/${routeId}`, {
+      const response = await fetch(`${API}/api/admin/routes/${routeId}`, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + token }
       })
@@ -1976,7 +2001,7 @@ if (generateBtn) {
   async function loadOfficeFilter() {
     try {
       const token = sessionStorage.getItem('token')
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/offices', {
+      const response = await fetch(`${API}/api/admin/offices`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const offices = await response.json()
@@ -1992,7 +2017,7 @@ if (generateBtn) {
   async function loadClerksForFilter() {
     try {
       const token = sessionStorage.getItem('token')
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/admin/clerks', {
+      const response = await fetch(`${API}/api/admin/clerks`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
       const clerks = await response.json()
@@ -2031,7 +2056,7 @@ if (generateBtn) {
       if (endDate) params.append('end_date', endDate)
       if (office_id) params.append('office_id', office_id)
 
-      const response = await fetch(`https://digital-matatu-courier-project.onrender.com/api/admin/reports?${params.toString()}`, {
+      const response = await fetch(`${API}/api/admin/reports?${params.toString()}`, {
         headers: { 'Authorization': 'Bearer ' + token }
       })
 
@@ -2143,7 +2168,7 @@ if (submitChangePwd) {
 
     try {
       const token    = sessionStorage.getItem('token')
-      const response = await fetch('https://digital-matatu-courier-project.onrender.com/api/auth/change-password', {
+      const response = await fetch(`${API}/api/auth/change-password`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ currentPassword: current.value, newPassword: newPwd.value })
