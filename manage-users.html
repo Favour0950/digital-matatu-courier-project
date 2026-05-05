@@ -101,7 +101,7 @@
           id="clerkSearchInput"
           class="table-search-input"
           placeholder="🔍 Search clerks..."
-          autocomplete = "off"
+          autocomplete = "new-password"
         />
       </div>
 
@@ -205,6 +205,54 @@
       </div>
     </div>
   </div>
+      <!-- ── Deactivate Confirmation Modal ── -->
+    <!-- Shows when admin clicks 🚫 Deactivate on a clerk -->
+    <div class="modal-overlay modal-hidden" id="deactivateClerkModal">
+      <div class="modal-box" style="max-width: 420px; text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">🚫</div>
+        <h2>Deactivate Clerk?</h2>
+        <p class="modal-subtitle" id="deactivateClerkMsg" style="margin: 12px 0 24px;">
+          This clerk will no longer be able to log in.
+        </p>
+        <div class="modal-actions" style="justify-content: center;">
+          <button class="btn-secondary" id="cancelDeactivateClerk">Cancel</button>
+          <button class="btn-primary" id="confirmDeactivateClerk" 
+                  style="background: var(--error, #ef4444);">Yes, Deactivate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Reactivate Confirmation Modal ── -->
+    <!-- Shows when admin clicks ✅ Reactivate on an inactive clerk -->
+    <div class="modal-overlay modal-hidden" id="reactivateClerkModal">
+      <div class="modal-box" style="max-width: 420px; text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">✅</div>
+        <h2>Reactivate Clerk?</h2>
+        <p class="modal-subtitle" id="reactivateClerkMsg" style="margin: 12px 0 24px;">
+          This clerk will be able to log in again.
+        </p>
+        <div class="modal-actions" style="justify-content: center;">
+          <button class="btn-secondary" id="cancelReactivateClerk">Cancel</button>
+          <button class="btn-primary" id="confirmReactivateClerk">Yes, Reactivate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Success Toast ── -->
+    <!-- Small notification that appears briefly after an action succeeds -->
+    <div id="clerkActionToast" style="
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    "></div>
 
   <script src="./js/main.js"></script>
 </body>

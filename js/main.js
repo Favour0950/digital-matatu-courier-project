@@ -141,23 +141,58 @@ window.editClerk = function (index) {
 window.deactivateClerk = function (index) {
   const clerk = _clerksData[index]
   if (!clerk) return
-  if (confirm('Are you sure you want to deactivate ' + clerk.name + '?\nThey will no longer be able to log in.')) {
-    deleteClerkFromBackend(clerk.user_id, clerk.name)
+
+  // Show the custom modal instead of the browser's ugly confirm()
+  const modal   = document.getElementById('deactivateClerkModal')
+  const msgEl   = document.getElementById('deactivateClerkMsg')
+  const confirmBtn = document.getElementById('confirmDeactivateClerk')
+
+  if (!modal) {
+    // Fallback if modal HTML hasn't been added yet
+    if (confirm('Deactivate ' + clerk.name + '?')) {
+      deleteClerkFromBackend(clerk.user_id, clerk.name)
+    }
+    return
   }
+
+  // Set the clerk's name in the message so admin knows who they're deactivating
+  if (msgEl) msgEl.textContent = clerk.name + ' will no longer be able to log in.'
+
+  modal.classList.remove('modal-hidden')
+
+  // Attach the confirm action — we clone the button to remove any old listeners
+  const newBtn = confirmBtn.cloneNode(true)
+  confirmBtn.parentNode.replaceChild(newBtn, confirmBtn)
+  newBtn.addEventListener('click', async function () {
+    modal.classList.add('modal-hidden')
+    await deleteClerkFromBackend(clerk.user_id, clerk.name)
+  })
 }
-window.reactivateClerk = async function(index) {
+window.reactivateClerk = async function (index) {
   const clerk = _clerksData[index]
   if (!clerk) return
-  if (!confirm('Reactivate ' + clerk.name + '?')) return
-  try {
-    const token = sessionStorage.getItem('token')
-    const response = await fetch(`${API}/api/admin/clerks/${clerk.user_id}/reactivate`, {
-      method: 'PUT',
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
-    if (response.ok) { await loadClerks() }
-    else { alert('Could not reactivate clerk.') }
-  } catch (error) { console.error('Reactivate error:', error) }
+
+  // Show the reactivate confirmation modal
+  const modal   = document.getElementById('reactivateClerkModal')
+  const msgEl   = document.getElementById('reactivateClerkMsg')
+  const confirmBtn = document.getElementById('confirmReactivateClerk')
+
+  if (!modal) {
+    if (confirm('Reactivate ' + clerk.name + '?')) {
+      await reactivateClerkOnBackend(clerk.user_id, clerk.name)
+    }
+    return
+  }
+
+  if (msgEl) msgEl.textContent = clerk.name + ' will be able to log in again.'
+  modal.classList.remove('modal-hidden')
+
+  const newBtn = confirmBtn.cloneNode(true)
+  confirmBtn.parentNode.replaceChild(newBtn, confirmBtn)
+  newBtn.addEventListener('click', async function () {
+    modal.classList.add('modal-hidden')
+    await reactivateClerkOnBackend(clerk.user_id, clerk.name)
+  })
 }
 
 window.editOffice = function (index) {
@@ -833,6 +868,16 @@ if (statusSearchBtn) {
           const successStatus = document.getElementById('success-new-status')
           if (successStatus) successStatus.textContent = newStatus.value
 
+          // Show SMS notification if the backend attempted to send one
+          if (data.sms_attempted) {
+            // Small toast telling clerk the notification was sent
+            const smsNote = document.createElement('p')
+            smsNote.style.cssText = 'color:#16a34a; font-size:0.85rem; margin-top:8px;'
+            smsNote.textContent = '📱 SMS notification sent to sender and receiver.'
+            document.getElementById('updateSuccess').appendChild(smsNote)
+            // Remove the note after 5 seconds so it doesn't stay permanently
+            setTimeout(() => smsNote.remove(), 5000)
+          }
         } else {
           statusErr.textContent = data.message || 'Update failed.'
         }
@@ -1291,7 +1336,12 @@ if (clerksTableBodyEl) {
 
   // ── Live search — filters table as clerk types ──
   const clerkSearchInput = document.getElementById('clerkSearchInput')
-  if (clerkSearchInput) clerkSearchInput.value = ''
+  if (clerkSearchInput) {
+      clerkSearchInput.value = ''  // clear immediately
+      setTimeout(() => {
+        clerkSearchInput.value = '' // clear again after browser autofill kicks in
+      }, 200)
+}
   if (clerkSearchInput) {
     clerkSearchInput.addEventListener('input', function () {
       const query    = this.value.toLowerCase()
@@ -1487,28 +1537,62 @@ if (clerksTableBodyEl) {
   // ── DELETE / DEACTIVATE CLERK ──
   // deleteClerkFromBackend is called by window.deactivateClerk
   async function deleteClerkFromBackend(userId, name) {
-    try {
-      const token = sessionStorage.getItem('token')
+  try {
+    const token = sessionStorage.getItem('token')
+    const response = await fetch(`${API}/api/admin/clerks/${userId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
 
-      // DELETE /api/admin/clerks/:id — remove the clerk (backend endpoint to add)
-      const response = await fetch(`${API}/api/admin/clerks/${userId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
-
-      if (response.ok) {
-        alert(name + ' has been deactivated.')
-        await loadClerks()  // reload to remove from table
-      } else {
-        const data = await response.json()
-        alert('Could not deactivate: ' + (data.message || 'Server error'))
-      }
-
-    } catch (error) {
-      console.error('Deactivate clerk error:', error)
-      alert('Could not connect to server.')
+    if (response.ok) {
+      showClerkToast(name + ' has been deactivated.')
+      await loadClerks()  // reload table to reflect the change
+    } else {
+      const data = await response.json()
+      showClerkToast('Could not deactivate: ' + (data.message || 'Server error'))
     }
+  } catch (error) {
+    console.error('Deactivate clerk error:', error)
+    showClerkToast('Could not connect to server.')
   }
+}
+
+// ── REACTIVATE CLERK ──
+async function reactivateClerkOnBackend(userId, name) {
+  try {
+    const token = sessionStorage.getItem('token')
+    const response = await fetch(`${API}/api/admin/clerks/${userId}/reactivate`, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+
+    if (response.ok) {
+      showClerkToast(name + ' has been reactivated.')
+      await loadClerks()
+    } else {
+      showClerkToast('Could not reactivate clerk.')
+    }
+  } catch (error) {
+    console.error('Reactivate error:', error)
+  }
+}
+
+// ── TOAST NOTIFICATION ──
+// Shows a small popup message at the bottom-right of the screen
+// Disappears automatically after 3 seconds
+function showClerkToast(message) {
+  const toast = document.getElementById('clerkActionToast')
+  if (!toast) return
+  toast.textContent = message
+  toast.style.display = 'block'
+  setTimeout(() => { toast.style.display = 'none' }, 3000)
+}
+
+// Wire up Cancel buttons on the two confirmation modals
+const cancelDeactivateBtn  = document.getElementById('cancelDeactivateClerk')
+const cancelReactivateBtn  = document.getElementById('cancelReactivateClerk')
+if (cancelDeactivateBtn)  cancelDeactivateBtn.addEventListener('click',  () => document.getElementById('deactivateClerkModal').classList.add('modal-hidden'))
+if (cancelReactivateBtn)  cancelReactivateBtn.addEventListener('click',  () => document.getElementById('reactivateClerkModal').classList.add('modal-hidden'))
 
   // Start loading on page open
   loadClerks()

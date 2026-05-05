@@ -87,7 +87,11 @@ const updateStatus = async (req, res) => {
     // --- SMS TRIGGER END ---
 
     // Final Success Response
-    res.json({ message: 'Status updated successfully', status })
+    res.json({ 
+        message: 'Status updated successfully', 
+        status,
+        sms_attempted: true  // frontend can show a notification based on this
+      })
 
   } catch (error) {
     if (client) {
