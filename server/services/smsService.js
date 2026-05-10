@@ -29,7 +29,7 @@ async function sendSMS(to, message) {
     const result = await sms.send({
       to:      recipients,
       message: message,
-      from:    'SwiftCourier' 
+      //from:    'SwiftCourier' 
     });
 
     // 2. This log is vital—it shows the API response in your Render dashboard
