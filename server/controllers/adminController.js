@@ -77,7 +77,7 @@ const getAllClerks = async (req, res) => {
       LEFT JOIN parcels p ON p.registered_by = u.user_id
       WHERE u.role = 'clerk'
       GROUP BY u.user_id, o.office_name
-      ORDER BY u.created_at DESC
+      ORDER BY u.is_active DESC, u.created_at DESC
     `)
 
     res.json(result.rows)

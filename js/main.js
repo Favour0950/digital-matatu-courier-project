@@ -1320,7 +1320,7 @@ if (clerksTableBodyEl) {
     // Wire up the ··· dropdown buttons after rendering
     attachActionDropdowns()
   }
-
+  
   // ── Update the 3 stat cards at the top of the page ──
   function updateClerkStats(data) {
     const totalEl   = document.getElementById('totalClerksCount')
@@ -1329,7 +1329,7 @@ if (clerksTableBodyEl) {
 
     if (totalEl)   totalEl.textContent   = data.length
     // Active = clerks where is_active is not false
-    if (activeEl)  activeEl.textContent  = data.filter(c => c.is_active !== false).length
+    if (activeEl)  activeEl.textContent  = data.filter(c => c.is_active === true).length
     // Pending = deactivated clerks
     if (pendingEl) pendingEl.textContent = data.filter(c => c.is_active === false).length
   }
