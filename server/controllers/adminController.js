@@ -76,7 +76,7 @@ const getAllClerks = async (req, res) => {
       LEFT JOIN offices o ON u.office_id = o.office_id
       LEFT JOIN parcels p ON p.registered_by = u.user_id
       WHERE u.role = 'clerk'
-      GROUP BY u.user_id, o.office_name
+      GROUP BY u.user_id, o.office_name, u.is_active
       ORDER BY u.is_active DESC, u.created_at DESC
     `)
 
@@ -445,27 +445,26 @@ const updateClerk = async (req, res) => {
     res.status(500).json({ message: 'Server error updating clerk' })
   }
 }
-
-// DELETE /api/admin/clerks/:id — remove a clerk account
 const deleteClerk = async (req, res) => {
   const { id } = req.params
-  
   try {
-    // Soft delete — set is_active = false instead of removing the row
-    // This preserves all parcel history linked to this clerk
-    await pool.query(
-      'UPDATE users SET is_active = false WHERE user_id = $1 AND role = $2',
+    // We use UPDATE because we are "soft deleting" by flipping the is_active switch
+    const result = await pool.query(
+      'UPDATE users SET is_active = false WHERE user_id = $1 AND role = $2 RETURNING *',
       [id, 'clerk']
     )
-    res.json({ message: 'Clerk deactivated successfully' })
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Clerk not found' })
+    }
+
+    // Success! Sending back JSON so the frontend fetch(ok) becomes true
+    res.json({ message: 'Clerk deactivated successfully', clerk: result.rows[0] })
   } catch (error) {
     console.error('Deactivate clerk error:', error)
-    res.status(500).json({ message: 'Server error' })
+    res.status(500).json({ message: 'Server error deactivating clerk' })
   }
 }
-
-
-
 
 // PUT /api/admin/clerks/:id/reactivate
 const reactivateClerk = async (req, res) => {

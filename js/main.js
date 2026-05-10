@@ -1329,7 +1329,7 @@ if (clerksTableBodyEl) {
 
     if (totalEl)   totalEl.textContent   = data.length
     // Active = clerks where is_active is not false
-    if (activeEl)  activeEl.textContent  = data.filter(c => c.is_active === true).length
+    if (activeEl)  activeEl.textContent  = data.filter(c => c.is_active !== false).length
     // Pending = deactivated clerks
     if (pendingEl) pendingEl.textContent = data.filter(c => c.is_active === false).length
   }
@@ -1536,7 +1536,9 @@ if (clerksTableBodyEl) {
 
   // ── DELETE / DEACTIVATE CLERK ──
   // deleteClerkFromBackend is called by window.deactivateClerk
-  async function deleteClerkFromBackend(userId, name) {
+  // FIND lines 1512 and 1533 and change them to this:
+
+window.deleteClerkFromBackend = async function(userId, name) { // ADD window.
   try {
     const token = sessionStorage.getItem('token')
     const response = await fetch(`${API}/api/admin/clerks/${userId}`, {
@@ -1546,19 +1548,17 @@ if (clerksTableBodyEl) {
 
     if (response.ok) {
       showClerkToast(name + ' has been deactivated.')
-      await loadClerks()  // reload table to reflect the change
+      await loadClerks() 
     } else {
       const data = await response.json()
-      showClerkToast('Could not deactivate: ' + (data.message || 'Server error'))
+      showClerkToast('Error: ' + (data.message || 'Server error'))
     }
   } catch (error) {
-    console.error('Deactivate clerk error:', error)
-    showClerkToast('Could not connect to server.')
+    console.error('Deactivate error:', error)
   }
 }
 
-// ── REACTIVATE CLERK ──
-async function reactivateClerkOnBackend(userId, name) {
+window.reactivateClerkOnBackend = async function(userId, name) { // ADD window.
   try {
     const token = sessionStorage.getItem('token')
     const response = await fetch(`${API}/api/admin/clerks/${userId}/reactivate`, {
@@ -1569,13 +1569,51 @@ async function reactivateClerkOnBackend(userId, name) {
     if (response.ok) {
       showClerkToast(name + ' has been reactivated.')
       await loadClerks()
-    } else {
-      showClerkToast('Could not reactivate clerk.')
     }
   } catch (error) {
     console.error('Reactivate error:', error)
   }
 }
+//   async function deleteClerkFromBackend(userId, name) {
+//   try {
+//     const token = sessionStorage.getItem('token')
+//     const response = await fetch(`${API}/api/admin/clerks/${userId}`, {
+//       method: 'DELETE',
+//       headers: { 'Authorization': 'Bearer ' + token }
+//     })
+
+//     if (response.ok) {
+//       showClerkToast(name + ' has been deactivated.')
+//       await loadClerks()  // reload table to reflect the change
+//     } else {
+//       const data = await response.json()
+//       showClerkToast('Could not deactivate: ' + (data.message || 'Server error'))
+//     }
+//   } catch (error) {
+//     console.error('Deactivate clerk error:', error)
+//     showClerkToast('Could not connect to server.')
+//   }
+// }
+
+// // ── REACTIVATE CLERK ──
+// async function reactivateClerkOnBackend(userId, name) {
+//   try {
+//     const token = sessionStorage.getItem('token')
+//     const response = await fetch(`${API}/api/admin/clerks/${userId}/reactivate`, {
+//       method: 'PUT',
+//       headers: { 'Authorization': 'Bearer ' + token }
+//     })
+
+//     if (response.ok) {
+//       showClerkToast(name + ' has been reactivated.')
+//       await loadClerks()
+//     } else {
+//       showClerkToast('Could not reactivate clerk.')
+//     }
+//   } catch (error) {
+//     console.error('Reactivate error:', error)
+//   }
+// }
 
 // ── TOAST NOTIFICATION ──
 // Shows a small popup message at the bottom-right of the screen
