@@ -1,4 +1,4 @@
-const pool = require('../db')
+const pool = require("../db");
 
 // ADMIN CONTROLLER
 // Handles all admin-only data: stats, users, offices, reports
@@ -8,57 +8,54 @@ const pool = require('../db')
 // Returns the 4 numbers shown on the admin dashboard stat cards
 const getDashboardStats = async (req, res) => {
   try {
-
     // We run 4 separate queries and collect results with Promise.all which shows them at the same time instead of waiting for each one sequentially
-    const [parcelsResult, revenueResult, clerksResult, officesResult] = await Promise.all([
-
-      // Total parcels registered in the last 30 days
-      pool.query(`
+    const [parcelsResult, revenueResult, clerksResult, officesResult] =
+      await Promise.all([
+        // Total parcels registered in the last 30 days
+        pool.query(`
         SELECT COUNT(*) AS total 
         FROM parcels
         WHERE created_at >= NOW() - INTERVAL '30 days'
       `),
 
-      // Total revenue collected in the last 30 days (sum of all payments)
-      pool.query(`
+        // Total revenue collected in the last 30 days (sum of all payments)
+        pool.query(`
         SELECT COALESCE(SUM(amount), 0) AS total
         FROM payments
         WHERE payment_date >= NOW() - INTERVAL '30 days'
       `),
 
-      // Count of active clerk accounts
-      pool.query(`
-        SELECT COUNT(*) AS total
-        FROM users
-        WHERE role = 'clerk'
+        // Count of active clerk accounts
+        // Only count clerks who are active
+        pool.query(`
+        SELECT COUNT(*) AS total FROM users
+        WHERE role = 'clerk' AND is_active = true
       `),
-
-      // Count of offices
-      pool.query(`
-        SELECT COUNT(*) AS total
-        FROM offices
-      `)
-    ])
+        pool.query(`SELECT COUNT(*) AS total FROM offices`),
+        // Count only active routes
+        pool.query(
+          `SELECT COUNT(*) AS total FROM routes WHERE is_active = true`,
+        ),
+      ]);
 
     // .rows[0] gets the first (and only) row from each result
     res.json({
-      total_parcels:  parseInt(parcelsResult.rows[0].total),
-      total_revenue:  parseFloat(revenueResult.rows[0].total),
-      active_clerks:  parseInt(clerksResult.rows[0].total),
-      active_offices: parseInt(officesResult.rows[0].total)
-    })
-
+      total_parcels: parseInt(parcelsResult.rows[0].total),
+      total_revenue: parseFloat(revenueResult.rows[0].total),
+      active_clerks: parseInt(clerksResult.rows[0].total),
+      active_routes:  parseInt(routesResult.rows[0].total),
+      active_offices: parseInt(officesResult.rows[0].total),
+    });
   } catch (error) {
-    console.error('Dashboard stats error:', error)
-    res.status(500).json({ message: 'Server error fetching stats' })
+    console.error("Dashboard stats error:", error);
+    res.status(500).json({ message: "Server error fetching stats" });
   }
-}
+};
 
 // ── GET /api/admin/clerks ──
 // Returns list of all clerk accounts with their office name
 const getAllClerks = async (req, res) => {
   try {
-
     // JOIN users with offices so we get the office name and id, not just the FK
     const result = await pool.query(`
       SELECT 
@@ -78,68 +75,64 @@ const getAllClerks = async (req, res) => {
       WHERE u.role = 'clerk'
       GROUP BY u.user_id, o.office_name, u.is_active
       ORDER BY u.is_active DESC, u.created_at DESC
-    `)
+    `);
 
-    res.json(result.rows)
-
+    res.json(result.rows);
   } catch (error) {
-    console.error('Get clerks error:', error)
-    res.status(500).json({ message: 'Server error fetching clerks' })
+    console.error("Get clerks error:", error);
+    res.status(500).json({ message: "Server error fetching clerks" });
   }
-}
+};
 
 // ── POST /api/admin/clerks ──
 // Creates a new clerk account
 // Expects: name, email, password, office_id in request body
 const createClerk = async (req, res) => {
-  const bcrypt = require('bcryptjs')
-  const { name, email, password, office_id } = req.body
+  const bcrypt = require("bcryptjs");
+  const { name, email, password, office_id } = req.body;
 
   // Basic validation — all fields required
   if (!name || !email || !password || !office_id) {
-    return res.status(400).json({ message: 'All fields are required' })
+    return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
-
     // Check if email already exists — prevent duplicates
     const existing = await pool.query(
-      'SELECT user_id FROM users WHERE email = $1',
-      [email]
-    )
+      "SELECT user_id FROM users WHERE email = $1",
+      [email],
+    );
 
     if (existing.rows.length > 0) {
-      return res.status(400).json({ message: 'Email already in use' })
+      return res.status(400).json({ message: "Email already in use" });
     }
 
     // Hash the password before saving — never store plain text passwords
     // 10 is the "salt rounds" — higher = more secure but slower
-    const password_hash = await bcrypt.hash(password, 10)
+    const password_hash = await bcrypt.hash(password, 10);
 
     // Insert the new clerk
     const result = await pool.query(
       `INSERT INTO users (name, email, password_hash, role, office_id)
        VALUES ($1, $2, $3, 'clerk', $4)
        RETURNING user_id, name, email, role`,
-      [name, email, password_hash, office_id]
-    )
+      [name, email, password_hash, office_id],
+    );
 
     res.status(201).json({
-      message: 'Clerk created successfully',
-      clerk: result.rows[0]
-    })
-
+      message: "Clerk created successfully",
+      clerk: result.rows[0],
+    });
   } catch (error) {
-    console.error('Create clerk error:', error)
-    res.status(500).json({ message: 'Server error creating clerk' })
+    console.error("Create clerk error:", error);
+    res.status(500).json({ message: "Server error creating clerk" });
   }
-}
+};
 
 // ── GET /api/admin/offices ──
 // Returns all offices
 const getAllOffices = async (req, res) => {
   try {
-
     // Also count how many clerks are assigned to each office
     const result = await pool.query(`
       SELECT 
@@ -152,105 +145,117 @@ const getAllOffices = async (req, res) => {
       LEFT JOIN users u ON o.office_id = u.office_id AND u.role = 'clerk'
       GROUP BY o.office_id
       ORDER BY o.office_name
-    `)
+    `);
 
-    res.json(result.rows)
-
+    res.json(result.rows);
   } catch (error) {
-    console.error('Get offices error:', error)
-    res.status(500).json({ message: 'Server error fetching offices' })
+    console.error("Get offices error:", error);
+    res.status(500).json({ message: "Server error fetching offices" });
   }
-}
+};
 
 // ── POST /api/admin/offices ──
 // Creates a new office
 const createOffice = async (req, res) => {
-  const { office_name, location } = req.body
+  const { office_name, location } = req.body;
 
   if (!office_name || !location) {
-    return res.status(400).json({ message: 'Office name and location are required' })
+    return res
+      .status(400)
+      .json({ message: "Office name and location are required" });
   }
 
   try {
-
     const result = await pool.query(
       `INSERT INTO offices (office_name, location)
        VALUES ($1, $2)
        RETURNING *`,
-      [office_name, location]
-    )
+      [office_name, location],
+    );
 
     res.status(201).json({
-      message: 'Office created successfully',
-      office: result.rows[0]
-    })
-
+      message: "Office created successfully",
+      office: result.rows[0],
+    });
   } catch (error) {
-    console.error('Create office error:', error)
-    res.status(500).json({ message: 'Server error creating office' })
+    console.error("Create office error:", error);
+    res.status(500).json({ message: "Server error creating office" });
   }
-}
+};
 
 // ── PUT /api/admin/offices/:id ──
 // Updates an existing office's name and location
 const updateOffice = async (req, res) => {
-  const { id } = req.params
-  const { office_name, location } = req.body
+  const { id } = req.params;
+  const { office_name, location } = req.body;
 
   if (!office_name || !location) {
-    return res.status(400).json({ message: 'Office name and location are required' })
+    return res
+      .status(400)
+      .json({ message: "Office name and location are required" });
   }
 
   try {
     const result = await pool.query(
-      'UPDATE offices SET office_name = $1, location = $2 WHERE office_id = $3 RETURNING *',
-      [office_name, location, id]
-    )
+      "UPDATE offices SET office_name = $1, location = $2 WHERE office_id = $3 RETURNING *",
+      [office_name, location, id],
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Office not found' })
+      return res.status(404).json({ message: "Office not found" });
     }
 
-    res.json({ message: 'Office updated successfully', office: result.rows[0] })
+    res.json({
+      message: "Office updated successfully",
+      office: result.rows[0],
+    });
   } catch (error) {
-    console.error('Update office error:', error)
-    res.status(500).json({ message: 'Server error updating office' })
+    console.error("Update office error:", error);
+    res.status(500).json({ message: "Server error updating office" });
   }
-}
+};
 
 // ── DELETE /api/admin/offices/:id ──
 // Deletes an office (only if no clerks are assigned to it)
 const deleteOffice = async (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
 
   try {
     const clerksCheck = await pool.query(
-      'SELECT COUNT(*) AS total FROM users WHERE office_id = $1 AND role = $2',
-      [id, 'clerk']
-    )
+      "SELECT COUNT(*) AS total FROM users WHERE office_id = $1 AND role = $2",
+      [id, "clerk"],
+    );
 
     if (parseInt(clerksCheck.rows[0].total) > 0) {
       return res.status(400).json({
-        message: 'Cannot delete office: clerks are still assigned to it.'
-      })
+        message: "Cannot delete office: clerks are still assigned to it.",
+      });
     }
 
-    await pool.query('DELETE FROM offices WHERE office_id = $1', [id])
-    res.json({ message: 'Office deleted successfully' })
+    await pool.query("DELETE FROM offices WHERE office_id = $1", [id]);
+    res.json({ message: "Office deleted successfully" });
   } catch (error) {
-    console.error('Delete office error:', error)
-    res.status(500).json({ message: 'Server error deleting office' })
+    console.error("Delete office error:", error);
+    res.status(500).json({ message: "Server error deleting office" });
   }
-}
+};
 
 // ── PUT /api/admin/routes/:id ──
 // Updates an existing route's pricing and distance
 const updateRoute = async (req, res) => {
-  const { id } = req.params
-  const { origin_office_id, destination_office_id, distance_km, base_price, price_per_kg } = req.body
+  const { id } = req.params;
+  const {
+    origin_office_id,
+    destination_office_id,
+    distance_km,
+    base_price,
+    price_per_kg,
+  } = req.body;
 
   if (origin_office_id == null || destination_office_id == null) {
-    return res.status(400).json({ message: 'Origin and destination offices are required' })
+    return res
+      .status(400)
+      .json({ message: "Origin and destination offices are required" });
   }
 
   try {
@@ -260,94 +265,101 @@ const updateRoute = async (req, res) => {
            distance_km = $3, base_price = $4, price_per_kg = $5
        WHERE route_id = $6
        RETURNING *`,
-      [origin_office_id, destination_office_id, distance_km || null, base_price || null, price_per_kg || null, id]
-    )
+      [
+        origin_office_id,
+        destination_office_id,
+        distance_km || null,
+        base_price || null,
+        price_per_kg || null,
+        id,
+      ],
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Route not found' })
+      return res.status(404).json({ message: "Route not found" });
     }
 
-    res.json({ message: 'Route updated successfully', route: result.rows[0] })
+    res.json({ message: "Route updated successfully", route: result.rows[0] });
   } catch (error) {
-    console.error('Update route error:', error)
-    res.status(500).json({ message: 'Server error updating route' })
+    console.error("Update route error:", error);
+    res.status(500).json({ message: "Server error updating route" });
   }
-}
+};
 
 // ── DELETE /api/admin/routes/:id ──
 // ── PUT /api/admin/routes/:id/deactivate ──
 // Marks a route as inactive instead of deleting it
 // Existing parcels on this route are not affected
 const deactivateRoute = async (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
   try {
     await pool.query(
-      'UPDATE routes SET is_active = false WHERE route_id = $1',
-      [id]
-    )
-    res.json({ message: 'Route deactivated successfully' })
+      "UPDATE routes SET is_active = false WHERE route_id = $1",
+      [id],
+    );
+    res.json({ message: "Route deactivated successfully" });
   } catch (error) {
-    console.error('Deactivate route error:', error)
-    res.status(500).json({ message: 'Server error' })
+    console.error("Deactivate route error:", error);
+    res.status(500).json({ message: "Server error" });
   }
-}
+};
 
 // ── PUT /api/admin/routes/:id/activate ──
 const activateRoute = async (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
   try {
-    await pool.query(
-      'UPDATE routes SET is_active = true WHERE route_id = $1',
-      [id]
-    )
-    res.json({ message: 'Route activated successfully' })
+    await pool.query("UPDATE routes SET is_active = true WHERE route_id = $1", [
+      id,
+    ]);
+    res.json({ message: "Route activated successfully" });
   } catch (error) {
-    console.error('Activate route error:', error)
-    res.status(500).json({ message: 'Server error' })
+    console.error("Activate route error:", error);
+    res.status(500).json({ message: "Server error" });
   }
-}
+};
 
 // ── GET /api/admin/reports ──
 // Returns parcel and revenue data for the reports page
 // Accepts optional query params: ?start_date=2026-01-01&end_date=2026-04-30&office_id=1
 const getReports = async (req, res) => {
   try {
-
     // Read filter values from URL query string — all optional
     // e.g. /api/admin/reports?start_date=2026-04-01&end_date=2026-04-30
-    const { start_date, end_date, office_id } = req.query
+    const { start_date, end_date, office_id } = req.query;
 
     // Build the WHERE clause dynamically based on which filters were provided
     // $1, $2 etc. are placeholders — values go in the params array below
-    let whereConditions = []
-    let params = []
-    let paramCount = 1
+    let whereConditions = [];
+    let params = [];
+    let paramCount = 1;
 
     if (start_date) {
-      whereConditions.push(`p.created_at >= $${paramCount}`)
-      params.push(start_date)
-      paramCount++
+      whereConditions.push(`p.created_at >= $${paramCount}`);
+      params.push(start_date);
+      paramCount++;
     }
 
     if (end_date) {
-      whereConditions.push(`p.created_at <= $${paramCount}`)
-      params.push(end_date + ' 23:59:59')  // include the whole end day
-      paramCount++
+      whereConditions.push(`p.created_at <= $${paramCount}`);
+      params.push(end_date + " 23:59:59"); // include the whole end day
+      paramCount++;
     }
 
     if (office_id) {
-      whereConditions.push(`p.origin_office_id = $${paramCount}`)
-      params.push(office_id)
-      paramCount++
+      whereConditions.push(`p.origin_office_id = $${paramCount}`);
+      params.push(office_id);
+      paramCount++;
     }
 
     // Join all conditions with AND, or use empty string if no filters
-    const whereClause = whereConditions.length > 0
-      ? 'WHERE ' + whereConditions.join(' AND ')
-      : ''
+    const whereClause =
+      whereConditions.length > 0
+        ? "WHERE " + whereConditions.join(" AND ")
+        : "";
 
     // Main query — get all parcels with sender, receiver, office, clerk, payment info
-    const parcelsResult = await pool.query(`
+    const parcelsResult = await pool.query(
+      `
       SELECT
         p.parcel_id,
         p.tracking_number,
@@ -371,10 +383,13 @@ const getReports = async (req, res) => {
       LEFT JOIN payments pay ON p.parcel_id        = pay.parcel_id
       ${whereClause}
       ORDER BY p.created_at DESC
-    `, params)
+    `,
+      params,
+    );
 
     // Summary stats for the 4 stat cards on the reports page
-    const summaryResult = await pool.query(`
+    const summaryResult = await pool.query(
+      `
       SELECT
         COUNT(*)                                          AS total_parcels,
         COALESCE(SUM(pay.amount), 0)                     AS total_revenue,
@@ -383,18 +398,19 @@ const getReports = async (req, res) => {
       FROM parcels p
       LEFT JOIN payments pay ON p.parcel_id = pay.parcel_id
       ${whereClause}
-    `, params)
+    `,
+      params,
+    );
 
     res.json({
       summary: summaryResult.rows[0],
-      parcels: parcelsResult.rows
-    })
-
+      parcels: parcelsResult.rows,
+    });
   } catch (error) {
-    console.error('Reports error:', error)
-    res.status(500).json({ message: 'Server error fetching reports' })
+    console.error("Reports error:", error);
+    res.status(500).json({ message: "Server error fetching reports" });
   }
-}
+};
 // ── GET /api/admin/routes ──
 const getRoutes = async (req, res) => {
   try {
@@ -413,20 +429,28 @@ const getRoutes = async (req, res) => {
       JOIN offices o1 ON r.origin_office_id      = o1.office_id
       JOIN offices o2 ON r.destination_office_id = o2.office_id
       ORDER BY o1.office_name
-    `)
-    res.json(result.rows)
+    `);
+    res.json(result.rows);
   } catch (error) {
-    console.error('Get routes error:', error)
-    res.status(500).json({ message: 'Server error fetching routes' })
+    console.error("Get routes error:", error);
+    res.status(500).json({ message: "Server error fetching routes" });
   }
-}
+};
 
 // ── POST /api/admin/routes ──
 const createRoute = async (req, res) => {
-  const { origin_office_id, destination_office_id, distance_km, base_price, price_per_kg } = req.body
+  const {
+    origin_office_id,
+    destination_office_id,
+    distance_km,
+    base_price,
+    price_per_kg,
+  } = req.body;
 
   if (origin_office_id == null || destination_office_id == null) {
-    return res.status(400).json({ message: 'Origin and destination offices are required' })
+    return res
+      .status(400)
+      .json({ message: "Origin and destination offices are required" });
   }
 
   try {
@@ -434,71 +458,84 @@ const createRoute = async (req, res) => {
       `INSERT INTO routes (origin_office_id, destination_office_id, distance_km, base_price, price_per_kg)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [origin_office_id, destination_office_id, distance_km || null, base_price || null, price_per_kg || null]
-    )
-    res.status(201).json({ message: 'Route created successfully', route: result.rows[0] })
+      [
+        origin_office_id,
+        destination_office_id,
+        distance_km || null,
+        base_price || null,
+        price_per_kg || null,
+      ],
+    );
+    res
+      .status(201)
+      .json({ message: "Route created successfully", route: result.rows[0] });
   } catch (error) {
-    console.error('Create route error:', error)
-    res.status(500).json({ message: 'Server error creating route' })
+    console.error("Create route error:", error);
+    res.status(500).json({ message: "Server error creating route" });
   }
-}
+};
 // PUT /api/admin/clerks/:id — update a clerk's name and office
 const updateClerk = async (req, res) => {
-  const { id } = req.params
-  const { name, office_id } = req.body
+  const { id } = req.params;
+  const { name, office_id } = req.body;
   try {
     await pool.query(
-      'UPDATE users SET name = $1, office_id = $2 WHERE user_id = $3 AND role = $4',
-      [name, office_id, id, 'clerk']
-    )
-    res.json({ message: 'Clerk updated successfully' })
+      "UPDATE users SET name = $1, office_id = $2 WHERE user_id = $3 AND role = $4",
+      [name, office_id, id, "clerk"],
+    );
+    res.json({ message: "Clerk updated successfully" });
   } catch (error) {
-    console.error('Update clerk error:', error)
-    res.status(500).json({ message: 'Server error updating clerk' })
+    console.error("Update clerk error:", error);
+    res.status(500).json({ message: "Server error updating clerk" });
   }
-}
+};
 const deleteClerk = async (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
   try {
     // We use UPDATE because we are "soft deleting" by flipping the is_active switch
     const result = await pool.query(
-      'UPDATE users SET is_active = false WHERE user_id = $1 AND role = $2 RETURNING *',
-      [id, 'clerk']
-    )
+      "UPDATE users SET is_active = false WHERE user_id = $1 AND role = $2 RETURNING *",
+      [id, "clerk"],
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Clerk not found' })
+      return res.status(404).json({ message: "Clerk not found" });
     }
 
     // Success! Sending back JSON so the frontend fetch(ok) becomes true
-    res.json({ message: 'Clerk deactivated successfully', clerk: result.rows[0] })
+    res.json({
+      message: "Clerk deactivated successfully",
+      clerk: result.rows[0],
+    });
   } catch (error) {
-    console.error('Deactivate clerk error:', error)
-    res.status(500).json({ message: 'Server error deactivating clerk' })
+    console.error("Deactivate clerk error:", error);
+    res.status(500).json({ message: "Server error deactivating clerk" });
   }
-}
+};
 
 // PUT /api/admin/clerks/:id/reactivate
 const reactivateClerk = async (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
   try {
-    await pool.query('UPDATE users SET is_active = true WHERE user_id = $1', [id])
-    res.json({ message: 'Clerk reactivated' })
+    await pool.query("UPDATE users SET is_active = true WHERE user_id = $1", [
+      id,
+    ]);
+    res.json({ message: "Clerk reactivated" });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' })
+    res.status(500).json({ message: "Server error" });
   }
-}
-
+};
 
 // ── GET /api/clerk/stats — clerk dashboard data ──
 // Returns only parcels registered by this specific clerk
 const getClerkDashboardData = async (req, res) => {
-  const clerk_id = req.user.user_id  // from the JWT token
+  const clerk_id = req.user.user_id; // from the JWT token
 
   try {
     const [statsResult, recentResult] = await Promise.all([
       // Summary counts for this clerk's parcels
-      pool.query(`
+      pool.query(
+        `
         SELECT
           COUNT(*)                                                    AS total_parcels,
           COALESCE(SUM(pay.amount), 0)                               AS total_revenue,
@@ -507,10 +544,13 @@ const getClerkDashboardData = async (req, res) => {
         FROM parcels p
         LEFT JOIN payments pay ON p.parcel_id = pay.parcel_id
         WHERE p.registered_by = $1
-      `, [clerk_id]),
+      `,
+        [clerk_id],
+      ),
 
       // 5 most recent parcels registered by this clerk
-      pool.query(`
+      pool.query(
+        `
         SELECT
           p.tracking_number, p.current_status, p.created_at,
           s.name AS sender_name,
@@ -525,20 +565,20 @@ const getClerkDashboardData = async (req, res) => {
         WHERE p.registered_by = $1
         ORDER BY p.created_at DESC
         LIMIT 5
-      `, [clerk_id])
-    ])
+      `,
+        [clerk_id],
+      ),
+    ]);
 
     res.json({
-      stats:   statsResult.rows[0],
-      parcels: recentResult.rows
-    })
-
+      stats: statsResult.rows[0],
+      parcels: recentResult.rows,
+    });
   } catch (error) {
-    console.error('Clerk dashboard error:', error)
-    res.status(500).json({ message: 'Server error' })
+    console.error("Clerk dashboard error:", error);
+    res.status(500).json({ message: "Server error" });
   }
-}
-
+};
 
 // Export all functions so routes can use them
 module.exports = {
@@ -558,5 +598,5 @@ module.exports = {
   deleteOffice,
   getClerkDashboardData,
   reactivateClerk,
-  getReports
-}
+  getReports,
+};

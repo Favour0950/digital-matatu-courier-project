@@ -1099,7 +1099,7 @@ if (parcelCanvas) {
         statCards[0].querySelector('.stat-value').textContent = stats.total_parcels.toLocaleString()
         statCards[1].querySelector('.stat-value').textContent = 'KES ' + Number(stats.total_revenue).toLocaleString()
         statCards[2].querySelector('.stat-value').textContent = stats.active_clerks
-        statCards[3].querySelector('.stat-value').textContent = stats.active_offices
+        statCards[3].querySelector('.stat-value').textContent = stats.active_routes
       }
 
       // Fetch parcel data for charts and top clerks table
@@ -1603,7 +1603,9 @@ window.deactivateRoute = async function(index) {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + token }
     })
-    if (res.ok) { await loadRoutes() }
+    if (res.ok) { 
+      showClerkToast('Route deactivated: ' + route.origin_name + ' → ' + route.destination_name)
+      await loadRoutes() }
     else { alert('Could not deactivate route.') }
   } catch (e) { console.error(e) }
 }
@@ -1618,7 +1620,9 @@ window.activateRoute = async function(index) {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + token }
     })
-    if (res.ok) { await loadRoutes() }
+    if (res.ok) { 
+      showClerkToast('Route activated: ' + route.origin_name + ' → ' + route.destination_name)
+      await loadRoutes() }
     else { alert('Could not activate route.') }
   } catch (e) { console.error(e) }
 }
@@ -1706,14 +1710,14 @@ if (officesGrid) {
     }
 
     tbody.innerHTML = data.map((route, index) => `
-    <tr style="opacity: ${route.is_active === false ? '0.6' : '1'}">
+    <tr style="opacity: ${route.is_active !== true ? '0.6' : '1'}">
       <td>${route.origin_name} → ${route.destination_name}</td>
       <td>${route.distance_km || '—'} km</td>
       <td>KES ${Number(route.base_price || 0).toLocaleString()}</td>
       <td>KES ${route.price_per_kg || '—'}/kg</td>
       <td>
-        <span class="badge ${route.is_active === false ? 'badge-pending' : 'badge-active'}">
-          ${route.is_active === false ? 'Inactive' : 'Active'}
+        <span class="badge ${route.is_active !== true ? 'badge-pending' : 'badge-active'}">
+          ${route.is_active !== true ? 'Inactive' : 'Active'}
         </span>
       </td>
       <td>
@@ -1721,8 +1725,8 @@ if (officesGrid) {
           <button class="btn-actions">···</button>
           <div class="actions-dropdown">
             <button onclick="editRoute(${index})">✏️ Edit</button>
-            <button onclick="${route.is_active === false ? 'activateRoute' : 'deactivateRoute'}(${index})">
-              ${route.is_active === false ? '✅ Activate' : '🚫 Deactivate'}
+            <button onclick="${route.is_active !== true ? 'activateRoute' : 'deactivateRoute'}(${index})">
+              ${route.is_active !== true ? '✅ Activate' : '🚫 Deactivate'}
             </button>
           </div>
         </div>
