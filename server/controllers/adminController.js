@@ -275,24 +275,35 @@ const updateRoute = async (req, res) => {
 }
 
 // ── DELETE /api/admin/routes/:id ──
-// Deletes a route
-const deleteRoute = async (req, res) => {
+// ── PUT /api/admin/routes/:id/deactivate ──
+// Marks a route as inactive instead of deleting it
+// Existing parcels on this route are not affected
+const deactivateRoute = async (req, res) => {
   const { id } = req.params
-
   try {
-    const result = await pool.query(
-      'DELETE FROM routes WHERE route_id = $1 RETURNING route_id',
+    await pool.query(
+      'UPDATE routes SET is_active = false WHERE route_id = $1',
       [id]
     )
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Route not found' })
-    }
-
-    res.json({ message: 'Route deleted successfully' })
+    res.json({ message: 'Route deactivated successfully' })
   } catch (error) {
-    console.error('Delete route error:', error)
-    res.status(500).json({ message: 'Server error deleting route' })
+    console.error('Deactivate route error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+}
+
+// ── PUT /api/admin/routes/:id/activate ──
+const activateRoute = async (req, res) => {
+  const { id } = req.params
+  try {
+    await pool.query(
+      'UPDATE routes SET is_active = true WHERE route_id = $1',
+      [id]
+    )
+    res.json({ message: 'Route activated successfully' })
+  } catch (error) {
+    console.error('Activate route error:', error)
+    res.status(500).json({ message: 'Server error' })
   }
 }
 
@@ -395,6 +406,7 @@ const getRoutes = async (req, res) => {
         r.distance_km,
         r.base_price,
         r.price_per_kg,
+        r.is_active,
         o1.office_name AS origin_name,
         o2.office_name AS destination_name
       FROM routes r
@@ -534,7 +546,8 @@ module.exports = {
   getRoutes,
   createRoute,
   updateRoute,
-  deleteRoute,
+  deactivateRoute,
+  activateRoute,
   updateClerk,
   deleteClerk,
   getAllClerks,

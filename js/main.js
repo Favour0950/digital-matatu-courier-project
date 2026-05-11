@@ -231,14 +231,6 @@ window.editRoute = function (index) {
   modal.classList.remove('modal-hidden')
 }
 
-window.deactivateRoute = function (index) {
-  const route = _routesData[index]
-  if (!route) return
-  if (confirm('Delete route "' + route.origin_name + ' → ' + route.destination_name + '"?\nThis cannot be undone.')) {
-    deleteRouteFromBackend(route.route_id)
-  }
-}
-
 // Module-level arrays so the window.edit* functions above can access them
 // They are populated when each page loads its data from the backend
 let _clerksData  = []
@@ -491,7 +483,7 @@ if (registerForm) {
       const allRoutes = await response.json()
 
       // Only show routes where origin matches the clerk's office
-      availableRoutes = allRoutes.filter(r => String(r.origin_office_id) === String(clerkOfficeId))
+      availableRoutes = allRoutes.filter(r => String(r.origin_office_id) === String(clerkOfficeId) && r.is_active !== false)
 
       // Build the dropdown options from the filtered routes
       if (destOffice) {
@@ -1234,7 +1226,6 @@ if (parcelCanvas) {
   loadAdminDashboard()
 }
 
-
 // ============================================================
 // SECTION 11: MANAGE USERS (manage-users.html)
 // Shows real clerks from the database, supports add + edit + deactivate
@@ -1574,46 +1565,6 @@ window.reactivateClerkOnBackend = async function(userId, name) { // ADD window.
     console.error('Reactivate error:', error)
   }
 }
-//   async function deleteClerkFromBackend(userId, name) {
-//   try {
-//     const token = sessionStorage.getItem('token')
-//     const response = await fetch(`${API}/api/admin/clerks/${userId}`, {
-//       method: 'DELETE',
-//       headers: { 'Authorization': 'Bearer ' + token }
-//     })
-
-//     if (response.ok) {
-//       showClerkToast(name + ' has been deactivated.')
-//       await loadClerks()  // reload table to reflect the change
-//     } else {
-//       const data = await response.json()
-//       showClerkToast('Could not deactivate: ' + (data.message || 'Server error'))
-//     }
-//   } catch (error) {
-//     console.error('Deactivate clerk error:', error)
-//     showClerkToast('Could not connect to server.')
-//   }
-// }
-
-// // ── REACTIVATE CLERK ──
-// async function reactivateClerkOnBackend(userId, name) {
-//   try {
-//     const token = sessionStorage.getItem('token')
-//     const response = await fetch(`${API}/api/admin/clerks/${userId}/reactivate`, {
-//       method: 'PUT',
-//       headers: { 'Authorization': 'Bearer ' + token }
-//     })
-
-//     if (response.ok) {
-//       showClerkToast(name + ' has been reactivated.')
-//       await loadClerks()
-//     } else {
-//       showClerkToast('Could not reactivate clerk.')
-//     }
-//   } catch (error) {
-//     console.error('Reactivate error:', error)
-//   }
-// }
 
 // ── TOAST NOTIFICATION ──
 // Shows a small popup message at the bottom-right of the screen
@@ -1636,13 +1587,41 @@ if (cancelReactivateBtn)  cancelReactivateBtn.addEventListener('click',  () => d
   loadClerks()
 }
 
-
 // ============================================================
 // SECTION 12: OFFICES & ROUTES (offices-routes.html)
 // Shows office cards and routes table from the database
 // Supports adding new offices and routes through modals
 // ============================================================
+//global functions
+window.deactivateRoute = async function(index) {
+  const route = _routesData[index]
+  if (!route) return
+  if (!confirm('Deactivate route: ' + route.origin_name + ' → ' + route.destination_name + '?\nExisting parcels will not be affected.')) return
+  try {
+    const token = sessionStorage.getItem('token')
+    const res = await fetch(`${API}/api/admin/routes/${route.route_id}/deactivate`, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    if (res.ok) { await loadRoutes() }
+    else { alert('Could not deactivate route.') }
+  } catch (e) { console.error(e) }
+}
 
+window.activateRoute = async function(index) {
+  const route = _routesData[index]
+  if (!route) return
+  if (!confirm('Activate route: ' + route.origin_name + ' → ' + route.destination_name + '?')) return
+  try {
+    const token = sessionStorage.getItem('token')
+    const res = await fetch(`${API}/api/admin/routes/${route.route_id}/activate`, {
+      method: 'PUT',
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    if (res.ok) { await loadRoutes() }
+    else { alert('Could not activate route.') }
+  } catch (e) { console.error(e) }
+}
 const officesGrid = document.getElementById('officesGrid')
 
 if (officesGrid) {
@@ -1727,23 +1706,29 @@ if (officesGrid) {
     }
 
     tbody.innerHTML = data.map((route, index) => `
-      <tr>
-        <td>${route.origin_name} → ${route.destination_name}</td>
-        <td style="color:var(--muted)">${route.distance_km || '—'} km</td>
-        <td>KES ${Number(route.base_price || 0).toLocaleString()}</td>
-        <td>KES ${route.price_per_kg || '—'}</td>
-        <td><span class="badge badge-active">active</span></td>
-        <td>
-          <div class="actions-wrapper" data-index="${index}">
-            <button class="btn-actions">···</button>
-            <div class="actions-dropdown">
-              <button onclick="editRoute(${index})">✏️ Edit</button>
-              <button class="danger" onclick="deactivateRoute(${index})">🗑️ Delete</button>
-            </div>
+    <tr style="opacity: ${route.is_active === false ? '0.6' : '1'}">
+      <td>${route.origin_name} → ${route.destination_name}</td>
+      <td>${route.distance_km || '—'} km</td>
+      <td>KES ${Number(route.base_price || 0).toLocaleString()}</td>
+      <td>KES ${route.price_per_kg || '—'}/kg</td>
+      <td>
+        <span class="badge ${route.is_active === false ? 'badge-pending' : 'badge-active'}">
+          ${route.is_active === false ? 'Inactive' : 'Active'}
+        </span>
+      </td>
+      <td>
+        <div class="actions-wrapper" data-index="${index}">
+          <button class="btn-actions">···</button>
+          <div class="actions-dropdown">
+            <button onclick="editRoute(${index})">✏️ Edit</button>
+            <button onclick="${route.is_active === false ? 'activateRoute' : 'deactivateRoute'}(${index})">
+              ${route.is_active === false ? '✅ Activate' : '🚫 Deactivate'}
+            </button>
           </div>
-        </td>
-      </tr>
-    `).join('')
+        </div>
+      </td>
+    </tr>
+  `).join('')
 
     if (countEl) countEl.textContent = `${data.length} active routes configured`
     attachActionDropdowns()

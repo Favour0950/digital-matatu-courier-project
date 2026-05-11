@@ -14,7 +14,8 @@ const {
   getRoutes,
   createRoute,
   updateRoute,
-  deleteRoute,
+  deactivateRoute,
+  activateRoute,
   updateClerk,
   reactivateClerk,
   deleteClerk
@@ -47,7 +48,8 @@ router.delete('/offices/:id', verifyToken, verifyAdmin, deleteOffice)
 router.get('/routes', verifyToken, getRoutes)// both clerks and admins can see the routes, so we only use verifyToken here, not verifyAdmin
 router.post('/routes',     verifyToken, verifyAdmin, createRoute)
 router.put('/routes/:id',  verifyToken, verifyAdmin, updateRoute)
-router.delete('/routes/:id', verifyToken, verifyAdmin, deleteRoute)
+router.put('/routes/:id/deactivate', verifyToken, verifyAdmin, deactivateRoute)
+router.put('/routes/:id/activate',   verifyToken, verifyAdmin, activateRoute)
 
 router.put('/clerks/:id',    verifyToken, verifyAdmin, updateClerk)
 router.delete('/clerks/:id', verifyToken, verifyAdmin, deleteClerk)
