@@ -5,11 +5,11 @@ const pool = require("../db");
 // Every function here requires verifyToken + verifyAdmin middleware
 
 // ── GET /api/admin/stats ──
-// Returns the 4 numbers shown on the admin dashboard stat cards
+// Returns the 5 numbers shown on the admin dashboard stat cards
 const getDashboardStats = async (req, res) => {
   try {
-    // We run 4 separate queries and collect results with Promise.all which shows them at the same time instead of waiting for each one sequentially
-    const [parcelsResult, revenueResult, clerksResult, officesResult] =
+    // We run 5 separate queries and collect results with Promise.all which shows them at the same time instead of waiting for each one sequentially
+    const [parcelsResult, revenueResult, clerksResult, officesResult, routesResult] =
       await Promise.all([
         // Total parcels registered in the last 30 days
         pool.query(`
