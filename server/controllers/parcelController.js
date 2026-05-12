@@ -128,16 +128,21 @@ const registerParcel = async (req, res) => {
       }
 
     // ── Step 6: Save the parcel record ──
+   // ── Step 6: Save the parcel record ──
+    // ============================================================
+    // CHANGE HIGHLIGHTED: Added balance_due to the INSERT list
+    // ============================================================
     const parcelResult = await pool.query(
       `INSERT INTO parcels 
         (tracking_number, sender_id, receiver_id, description, weight,
-         origin_office_id, destination_office_id, amount_charged, registered_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         origin_office_id, destination_office_id, amount_charged, balance_due, registered_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
       [
         tracking_number, sender_db_id, receiver_db_id, description,
         weight, origin_office_id, destination_office_id,
-        amount_charged, registered_by
+        amount_charged, amount_charged, // balance_due set to full cost here
+        registered_by
       ]
     )
 
