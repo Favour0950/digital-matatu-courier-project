@@ -28,22 +28,31 @@ const updateStatus = async (req, res) => {
 
     const parcel_id = parcelResult.rows[0].parcel_id
 
-    // Payment Required Check
-    const restrictedStatuses = ['In Transit', 'Arrived', 'Collected'];
-    if (restrictedStatuses.includes(status)) {
-        const paymentCheck = await client.query(
-            'SELECT payment_id FROM payments WHERE parcel_id = $1 AND payment_status = $2',
-            [parcel_id, 'Paid']
-        );
+    // ============================================================
+    // START OF CHANGE: NEW PAYMENT GATE LOGIC
+    // This replaces the old 'restrictedStatuses' block.
+    // It now ONLY blocks the 'Collected' status if a balance is owed.
+    // ============================================================
+    if (status === 'Collected') {
+      const paymentCheck = await client.query(
+        `SELECT COALESCE(balance_due, amount_charged) AS balance_due 
+         FROM parcels WHERE parcel_id = $1`,
+        [parcel_id]
+      )
+      const balanceDue = parseFloat(paymentCheck.rows[0].balance_due)
 
-        if (paymentCheck.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(402).json({ 
-                message: 'Payment required',
-                parcel_id: parcel_id 
-            });
-        }
+      if (balanceDue > 0) {
+        await client.query('ROLLBACK')
+        return res.status(402).json({
+          message: `Cannot collect parcel. Outstanding balance: KES ${balanceDue.toLocaleString()}. Please complete payment first.`,
+          balance_due: balanceDue,
+          tracking_number: tracking_number
+        })
+      }
     }
+    // ============================================================
+    // END OF CHANGE
+    // ============================================================
 
     // Step 2: Update current_status
     await client.query(
@@ -62,9 +71,8 @@ const updateStatus = async (req, res) => {
 
     // --- STEP 5: SMS TRIGGER START ---
     try {
-      const { sendSMS } = require('../services/smsService') //
+      const { sendSMS } = require('../services/smsService') 
       
-      // Get sender and receiver phone numbers
       const phoneQuery = await pool.query(`
         SELECT s.phone_number AS sender_phone, r.phone_number AS receiver_phone, 
                p.tracking_number
@@ -82,7 +90,7 @@ const updateStatus = async (req, res) => {
         sendSMS([sender_phone, receiver_phone], message).catch(console.error)
       }
     } catch (smsError) {
-      console.error('SMS trigger error:', smsError) // Don't block the response
+      console.error('SMS trigger error:', smsError) 
     }
     // --- SMS TRIGGER END ---
 
@@ -90,7 +98,7 @@ const updateStatus = async (req, res) => {
     res.json({ 
         message: 'Status updated successfully', 
         status,
-        sms_attempted: true  // frontend can show a notification based on this
+        sms_attempted: true  
       })
 
   } catch (error) {

@@ -1,14 +1,20 @@
 const pool = require('../db')
-// RECORD PAYMENT
-// Handles POST /api/ payments
+// ── POST /api/payments ──
+// Records a payment (full or partial) against a parcel
+// Updates the parcel's running balance_due after each payment
 const recordPayment = async (req, res) => {
-
   const { tracking_number, amount, payment_method, mpesa_ref } = req.body
 
+  if (!tracking_number || !amount || !payment_method) {
+    return res.status(400).json({ message: 'Tracking number, amount and payment method are required.' })
+  }
+
   try {
-    // Find the parcel by tracking number
+    // Get parcel with its current outstanding balance
     const parcelResult = await pool.query(
-      'SELECT parcel_id, amount_charged, current_status FROM parcels WHERE tracking_number = $1',
+      `SELECT parcel_id, amount_charged,
+              COALESCE(balance_due, amount_charged) AS balance_due
+       FROM parcels WHERE tracking_number = $1`,
       [tracking_number]
     )
 
@@ -16,59 +22,85 @@ const recordPayment = async (req, res) => {
       return res.status(404).json({ message: 'Parcel not found' })
     }
 
-    const parcel = parcelResult.rows[0]
+    const parcel     = parcelResult.rows[0]
+    const totalOwed  = parseFloat(parcel.amount_charged)
+    const balanceDue = parseFloat(parcel.balance_due)
+    const paidNow    = parseFloat(amount)
 
-    // Check if payment already exists for this parcel
-    const existingPayment = await pool.query(
-      'SELECT payment_id FROM payments WHERE parcel_id = $1',
-      [parcel.parcel_id]
-    )
-
-    if (existingPayment.rows.length > 0) {
-      return res.status(400).json({ message: 'Payment already recorded for this parcel' })
+    // Validate amount
+    if (paidNow <= 0) {
+      return res.status(400).json({ message: 'Amount must be greater than 0.' })
+    }
+    if (paidNow > balanceDue) {
+      return res.status(400).json({
+        message: `Amount exceeds outstanding balance. Only KES ${balanceDue.toLocaleString()} is owed.`
+      })
     }
 
-    // Save the payment record
-    // mpesa_ref is stored in a notes-style field if provided
+    // Calculate new balance after this payment
+    const newBalance  = Math.max(0, balanceDue - paidNow)
+    const isFullyPaid = newBalance <= 0
+
+    // payment_type: 'full' = paid everything at once, 'partial' = still owes, 'balance' = cleared remaining
+    const payment_type = isFullyPaid && balanceDue === totalOwed ? 'full'
+                       : isFullyPaid ? 'balance'
+                       : 'partial'
+
+    // Insert the payment record
     const paymentResult = await pool.query(
-      `INSERT INTO payments (parcel_id, amount, payment_method, payment_status)
-       VALUES ($1, $2, $3, 'Paid')
+      `INSERT INTO payments (parcel_id, amount, payment_method, mpesa_ref, payment_status, payment_type)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [parcel.parcel_id, amount, payment_method]
+      [
+        parcel.parcel_id,
+        paidNow,
+        payment_method,
+        mpesa_ref || null,
+        isFullyPaid ? 'Paid' : 'Partial',
+        payment_type
+      ]
+    )
+
+    // Update the parcel's outstanding balance
+    await pool.query(
+      'UPDATE parcels SET balance_due = $1 WHERE parcel_id = $2',
+      [newBalance, parcel.parcel_id]
     )
 
     res.status(201).json({
-      message: 'Payment recorded successfully',
-      payment: paymentResult.rows[0]
+      message:     isFullyPaid ? 'Payment complete. Parcel is fully paid.' : 'Partial payment recorded.',
+      payment:     paymentResult.rows[0],
+      balance_due: newBalance,
+      fully_paid:  isFullyPaid
     })
 
   } catch (error) {
     console.error('Record payment error:', error)
-    res.status(500).json({ message: 'Server error while recording payment' })
+    res.status(500).json({ message: 'Server error recording payment' })
   }
 }
 
-// ── GET PARCEL FOR PAYMENT PAGE ──
-// Handles GET /api/payments/parcel/:tracking_number
-// Returns parcel summary so the payment form can show it
+// ── GET /api/payments/parcel/:tracking_number ──
+// Returns parcel summary for the payment form, including current balance
 const getParcelForPayment = async (req, res) => {
-
   const { tracking_number } = req.params
 
   try {
     const result = await pool.query(`
-      SELECT 
+      SELECT
         p.tracking_number,
         p.amount_charged,
-        p.current_status,
-        s.name AS sender_name,
-        o2.office_name AS destination_office,
-        -- Check if payment exists already
-        CASE WHEN pay.payment_id IS NOT NULL THEN 'Paid' ELSE 'Unpaid' END AS payment_status
+        COALESCE(p.balance_due, p.amount_charged) AS balance_due,
+        s.name           AS sender_name,
+        o2.office_name   AS destination_office,
+        CASE
+          WHEN COALESCE(p.balance_due, p.amount_charged) <= 0           THEN 'Paid'
+          WHEN COALESCE(p.balance_due, p.amount_charged) < p.amount_charged THEN 'Partial'
+          ELSE 'Unpaid'
+        END AS payment_status
       FROM parcels p
-      JOIN customers s ON p.sender_id = s.customer_id
-      JOIN offices o2 ON p.destination_office_id = o2.office_id
-      LEFT JOIN payments pay ON p.parcel_id = pay.parcel_id
+      JOIN customers s  ON p.sender_id            = s.customer_id
+      JOIN offices   o2 ON p.destination_office_id = o2.office_id
       WHERE p.tracking_number = $1
     `, [tracking_number])
 

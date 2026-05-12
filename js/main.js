@@ -843,12 +843,26 @@ if (statusSearchBtn) {
             notes:  notes ? notes.value.trim() : ''
           })
         })
-        // --- ADD THIS SECTION HERE ---
+        // --- ADD THIS SECTION HERE  to handle errors---
         if (response.status === 402) {
-        // If payment is required, show the modal instead of an error message
-        showPaymentModal(currentTracking)
-        return
-        } // ------------------------------
+          const errorData = await response.json()
+
+          // If it's a Collected block due to unpaid balance, redirect to payment page
+          if (errorData.tracking_number) {
+            // Save the tracking number so record-payment page auto-fills it
+            sessionStorage.setItem('pendingPaymentTracking', errorData.tracking_number)
+
+            // Show a message then redirect after 2 seconds
+            statusErr.textContent = errorData.message + ' Redirecting to payment...'
+            setTimeout(() => {
+              window.location.href = 'record-payment.html'
+            }, 2000)
+          } else {
+            // Generic payment error
+            statusErr.textContent = errorData.message || 'Payment required.'
+          }
+          return
+        }// ------------------------------
 
         const data = await response.json()
 
@@ -962,15 +976,33 @@ if (paymentSearchBtn) {
 
       const data = await response.json()
 
-      if (response.ok) {
+            if (response.ok) {
+        // Populate the parcel summary card
         document.getElementById('pay-tracking').textContent = data.tracking_number
         document.getElementById('pay-sender').textContent   = data.sender_name
         document.getElementById('pay-route').textContent    = data.destination_office
         document.getElementById('pay-cost').textContent     = 'KES ' + Number(data.amount_charged).toLocaleString()
         document.getElementById('pay-status').textContent   = data.payment_status
 
-        paymentSection.style.display = 'block'
+        // Show outstanding balance banner if parcel isn't fully paid
+        const balanceInfo    = document.getElementById('balanceInfo')
+        const balanceDisplay = document.getElementById('balanceDueDisplay')
+        const balanceDue     = parseFloat(data.balance_due) || 0
 
+        if (balanceDue > 0 && balanceDue < parseFloat(data.amount_charged)) {
+          // Partially paid — show how much is still owed
+          if (balanceDisplay) balanceDisplay.textContent = 'KES ' + balanceDue.toLocaleString()
+          if (balanceInfo)    balanceInfo.style.display   = 'block'
+        } else if (balanceDue >= parseFloat(data.amount_charged)) {
+          // Fully unpaid — still show the full amount so clerk knows what to charge
+          if (balanceDisplay) balanceDisplay.textContent = 'KES ' + balanceDue.toLocaleString()
+          if (balanceInfo)    balanceInfo.style.display   = 'block'
+        } else {
+          // Already fully paid
+          if (balanceInfo) balanceInfo.style.display = 'none'
+        }
+
+        paymentSection.style.display = 'block'
       } else {
         notFound.style.display = 'block'
       }
@@ -988,12 +1020,31 @@ if (paymentSearchBtn) {
   })
 
   // Show/hide the M-Pesa reference field based on payment method selected
+  // Show/hide M-Pesa reference field and STK push simulation message
   const paymentMethodSelect = document.getElementById('paymentMethod')
   if (paymentMethodSelect) {
     paymentMethodSelect.addEventListener('change', function () {
-      const mpesaGroup = document.getElementById('mpesaRefGroup')
-      if (mpesaGroup) {
-        mpesaGroup.style.display = (this.value === 'mpesa') ? 'block' : 'none'
+      const mpesaGroup  = document.getElementById('mpesaRefGroup')
+      const mpesaSimMsg = document.getElementById('mpesaSimMessage')
+
+      if (this.value === 'mpesa') {
+        if (mpesaGroup) mpesaGroup.style.display = 'block'
+
+        // Show STK push simulation message so examiner understands the flow
+        if (mpesaSimMsg) {
+          mpesaSimMsg.style.display = 'block'
+          mpesaSimMsg.innerHTML = `
+            <div style="background:#e8f5e9;border:1px solid #4caf50;border-radius:8px;padding:12px;margin-bottom:12px;">
+              <p style="margin:0;font-size:0.85rem;color:#1b5e20;">
+                📱 <strong>M-Pesa STK Push (Simulated):</strong> In production, the customer
+                receives a payment prompt on their Safaricom line. They enter their PIN to confirm,
+                and you receive the M-Pesa reference below. Enter it to complete payment.
+              </p>
+            </div>`
+        }
+      } else {
+        if (mpesaGroup)  mpesaGroup.style.display  = 'none'
+        if (mpesaSimMsg) mpesaSimMsg.style.display = 'none'
       }
     })
   }
@@ -1041,11 +1092,27 @@ if (paymentSearchBtn) {
         const data = await response.json()
 
         if (response.ok) {
+          // Hide the form, show success card
           document.getElementById('paymentSection').style.display  = 'none'
           document.getElementById('paymentSuccess').style.display  = 'block'
           document.getElementById('success-pay-tracking').textContent = tracking_number
           document.getElementById('success-pay-amount').textContent   = 'KES ' + Number(amount.value).toLocaleString()
           document.getElementById('success-pay-method').textContent   = method.options[method.selectedIndex].text
+
+          // If there's still a balance remaining, show a warning on the success card
+          if (data.balance_due > 0) {
+            const successEl    = document.getElementById('paymentSuccess')
+            // Remove any old balance note first
+            const oldNote = successEl.querySelector('.balance-remaining-note')
+            if (oldNote) oldNote.remove()
+
+            const balanceNote  = document.createElement('p')
+            balanceNote.className = 'balance-remaining-note'
+            balanceNote.style.cssText = 'color:#b45309;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px;font-size:0.85rem;margin-top:12px;'
+            balanceNote.innerHTML = `⚠️ <strong>Remaining balance: KES ${Number(data.balance_due).toLocaleString()}</strong><br>
+              <span style="font-size:0.8rem;">The parcel can be dispatched and delivered but cannot be collected until this is paid.</span>`
+            successEl.appendChild(balanceNote)
+          }
         } else {
           methodErr.textContent = data.message || 'Payment failed.'
         }
