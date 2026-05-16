@@ -564,7 +564,7 @@ const getClerkDashboardData = async (req, res) => {
         JOIN offices   o2 ON p.destination_office_id = o2.office_id
         WHERE p.registered_by = $1
         ORDER BY p.created_at DESC
-        LIMIT 5
+        LIMIT 8
       `,
         [clerk_id],
       ),
