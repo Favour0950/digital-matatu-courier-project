@@ -78,6 +78,38 @@ function getInitials(name) {
   if (!name) return '?'
   return name.split(' ').map(part => part[0]).join('').toUpperCase().slice(0, 2)
 }
+// Helper to fetch dashboard parcels and populate pills
+async function populateRecentPills(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  try {
+    const token = sessionStorage.getItem('token');
+    const response = await fetch(`${API}/api/clerk/stats`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await response.json();
+
+    if (response.ok && data.parcels.length > 0) {
+      container.parentElement.style.display = 'block'; // Show the wrapper
+      container.innerHTML = data.parcels.slice(0, 3).map(p => `
+        <button class="pill" data-tracking="${p.tracking_number}">${p.tracking_number}</button>
+      `).join('');
+
+      // Add click listeners to new pills
+      container.querySelectorAll('.pill').forEach(pill => {
+        pill.addEventListener('click', function() {
+          const input = containerId.includes('status') 
+            ? document.getElementById('statusSearchInput') 
+            : document.getElementById('searchInput');
+          input.value = this.getAttribute('data-tracking');
+          // Trigger search automatically
+          containerId.includes('status') ? findParcelForStatus() : runSearch();
+        });
+      });
+    }
+  } catch (e) { console.error('Pill population error:', e); }
+}
 
 
 // ============================================================
@@ -635,6 +667,7 @@ if (registerForm) {
 const searchBtn = document.getElementById('searchBtn')
 
 if (searchBtn) {
+  populateRecentPills('recentPillsContainer')
 
   async function runSearch() {
     const query      = document.getElementById('searchInput').value.trim().toUpperCase()
@@ -742,7 +775,7 @@ if (searchBtn) {
         notFound.style.display = 'block'
       }
 
-    } }catch (error) {
+    } } catch (error) {
       console.error('Search error:', error)
       notFound.style.display = 'block'
     }
@@ -770,6 +803,7 @@ if (searchBtn) {
 const statusSearchBtn = document.getElementById('statusSearchBtn')
 
 if (statusSearchBtn) {
+  populateRecentPills('statusRecentPills');
 
   // Stores the tracking number of the parcel currently shown
   // Used when the confirm button is clicked to know which parcel to update
@@ -1892,7 +1926,24 @@ window.activateRoute = async function(index) {
   } catch (e) { console.error(e) }
 }
 const officesGrid = document.getElementById('officesGrid')
+window.loadOfficesIntoEditRouteModal = async function() {
+    try {
+      const token    = sessionStorage.getItem('token')
+      const response = await fetch(`${API}/api/admin/offices`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      const offices = await response.json()
+      const options = '<option value="">Select</option>' +
+        offices.map(o => `<option value="${o.office_id}">${o.office_name}</option>`).join('')
 
+      const originSel = document.getElementById('editRouteOrigin')
+      const destSel   = document.getElementById('editRouteDestination')
+      if (originSel) originSel.innerHTML = options
+      if (destSel)   destSel.innerHTML   = options
+    } catch (error) {
+      console.error('Load offices for edit route modal error:', error)
+    }
+  }
 if (officesGrid) {
 
   // ── Load and render offices ──
@@ -2270,24 +2321,7 @@ if (officesGrid) {
   }
 
   // Loads real offices into the edit-route modal selects
-  async function loadOfficesIntoEditRouteModal() {
-    try {
-      const token    = sessionStorage.getItem('token')
-      const response = await fetch(`${API}/api/admin/offices`, {
-        headers: { 'Authorization': 'Bearer ' + token }
-      })
-      const offices = await response.json()
-      const options = '<option value="">Select</option>' +
-        offices.map(o => `<option value="${o.office_id}">${o.office_name}</option>`).join('')
-
-      const originSel = document.getElementById('editRouteOrigin')
-      const destSel   = document.getElementById('editRouteDestination')
-      if (originSel) originSel.innerHTML = options
-      if (destSel)   destSel.innerHTML   = options
-    } catch (error) {
-      console.error('Load offices for edit route modal error:', error)
-    }
-  }
+  
 
   if (closeEditRouteBtn)  closeEditRouteBtn.addEventListener('click',  closeEditRouteModal)
   if (cancelEditRouteBtn) cancelEditRouteBtn.addEventListener('click', closeEditRouteModal)

@@ -67,13 +67,10 @@
       <button class="btn-primary search-btn" id="searchBtn">Search</button>
     </div>
 
-    <!-- Recent searches — these are just visual pills, not connected to backend yet -->
-    <div class="recent-searches">
+    <!-- Recent searches — these are populated by JS from localStorage and shown when the user focuses on the search input -->
+    <div class="recent-searches" id="recentSearchWrapper" style="display: none;">
       <span class="recent-label">Recent:</span>
-      <!-- These pills can be clicked to pre-fill the search box -->
-      <button class="pill" data-tracking="PKG-2024-0001">PKG-2024-0001</button>
-      <button class="pill" data-tracking="PKG-2024-0002">PKG-2024-0002</button>
-      <button class="pill" data-tracking="PKG-2024-0003">PKG-2024-0003</button>
+      <div id="recentPillsContainer" style="display: inline-flex; gap: 8px;"></div>
     </div>
 
     <!-- ── Results section — hidden until a search runs ── -->
