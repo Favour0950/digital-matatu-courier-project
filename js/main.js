@@ -426,10 +426,9 @@ if (hamburgerBtn) {
   })
 }
 
-
 // ============================================================
 // SECTION 5: CLERK DASHBOARD (dashboard-clerk.html)
-// Loads real stat numbers and live feed table from the backend
+// Loads real stat numbers, live feed table, and activity history
 // ============================================================
 
 async function loadClerkDashboard() {
@@ -438,11 +437,45 @@ async function loadClerkDashboard() {
   const isClerkDash = statsGrid && !document.getElementById('parcelVolumeChart')
   if (!isClerkDash) return
 
-  try {
-    const token = sessionStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
 
-    // use the clerk specific endpoint that returns only the data needed for the clerk dashboard
-     const response = await fetch(`${API}/api/clerk/stats`, {
+  // ── SUB-FUNCTION: Load Clerk's own parcel history ──
+  // Defined here so it can be called initially and on dropdown change
+  async function loadClerkActivity(days) {
+    const tbody = document.getElementById('clerkReportBody')
+    if (!tbody) return
+    
+    try {
+      const res  = await fetch(`${API}/api/clerk/parcels?days=${days}`, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      const data = await res.json()
+      
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">No parcels handled in this period.</td></tr>`
+        return
+      }
+      
+      tbody.innerHTML = data.map(p => `
+        <tr>
+          <td>${p.tracking_number}</td>
+          <td>${p.sender_name}</td>
+          <td>${p.origin_office} → ${p.destination_office}</td>
+          <td><span class="badge ${getStatusBadgeClass(p.current_status)}">${p.current_status}</span></td>
+          <td>KES ${Number(p.amount_charged).toLocaleString()}</td>
+          <td><span class="badge ${p.payment_status === 'Paid' ? 'badge-active' : 'badge-pending'}">${p.payment_status}</span></td>
+          <td>${new Date(p.created_at).toLocaleDateString('en-GB', {day:'numeric',month:'short'})}</td>
+        </tr>
+      `).join('')
+    } catch (e) {
+      console.error('Clerk report error:', e)
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--error);padding:24px;">Could not load history.</td></tr>`
+    }
+  }
+
+  try {
+    // ── Part 1: Main Stats and Live Feed ──
+    const response = await fetch(`${API}/api/clerk/stats`, {
       headers: { 'Authorization': 'Bearer ' + token }
     })
 
@@ -450,7 +483,6 @@ async function loadClerkDashboard() {
     const data = await response.json()
 
     // Update the 4 stat card values
-    // querySelectorAll gives us all .stat-value elements in order
     const statValues = document.querySelectorAll('.stat-card .stat-value')
     if (statValues.length >= 4) {
       statValues[0].textContent = data.stats.total_parcels
@@ -473,8 +505,17 @@ async function loadClerkDashboard() {
       `).join('')
     }
 
+    // ── Part 2: Activity History ──
+    // Load the 7-day view by default
+    loadClerkActivity(7)
+
+    // Wire up the dropdown to reload just the activity table
+    const daysSelect = document.getElementById('clerkReportDays')
+    if (daysSelect) {
+      daysSelect.addEventListener('change', (e) => loadClerkActivity(e.target.value))
+    }
+
   } catch (error) {
-    // If fetch fails (e.g. server down), the placeholder HTML stays — that's fine
     console.log('Clerk dashboard: could not load live data', error)
   }
 }
