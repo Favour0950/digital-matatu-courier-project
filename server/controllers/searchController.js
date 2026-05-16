@@ -16,6 +16,8 @@ const searchParcel =  async (req, res) => {
         p.amount_charged,
         p.current_status,
         p.created_at,
+        p.collected_by_name,
+        p.collected_by_id,
         s.name         AS sender_name,
         s.phone_number AS sender_phone,
         r.name         AS receiver_name,

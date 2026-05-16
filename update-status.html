@@ -104,6 +104,18 @@
             </select>
             <span class="error" id="newStatus-error"></span>
           </div>
+          <div id="collectorFields" style="display:none; margin-top: 16px;">
+            <div class="form-group">
+              <label for="collectorName">Collector's Full Name</label>
+              <input type="text" id="collectorName" placeholder="Name of person collecting" />
+              <span class="error" id="collectorName-error" style="color:red; font-size:0.8rem;"></span>
+            </div>
+            <div class="form-group">
+              <label for="collectorId">Collector's ID Number</label>
+              <input type="text" id="collectorId" placeholder="National ID or passport" />
+              <span class="error" id="collectorId-error" style="color:red; font-size:0.8rem;"></span>
+            </div>
+          </div>
 
           <div class="form-group">
             <label for="statusNotes">Notes (optional)</label>

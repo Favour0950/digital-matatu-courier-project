@@ -2,7 +2,7 @@ const pool = require('../db')
 
 const updateStatus = async (req, res) => {
   const { tracking_number } = req.params
-  const { status, notes } = req.body
+  const { status, notes ,collected_by_name, collected_by_id } = req.body
   const updated_by = req.user.user_id
 
   const validStatuses = ['Registered', 'Dispatched', 'In Transit', 'Arrived', 'Collected']
@@ -59,12 +59,21 @@ const updateStatus = async (req, res) => {
       'UPDATE parcels SET current_status = $1 WHERE parcel_id = $2',
       [status, parcel_id]
     )
+    if (status === 'Collected' && collected_by_name) {
+      await client.query(
+        'UPDATE parcels SET collected_by_name = $1, collected_by_id = $2 WHERE parcel_id = $3',
+        [collected_by_name, collected_by_id, parcel_id]
+      )
+    }
 
     // Step 3: Log to history
+    const historyNotes = status === 'Collected' && collected_by_name
+    ? `Collected by: ${collected_by_name} (ID: ${collected_by_id}). ${notes || ''}`
+    : notes || ''
     await client.query(
       `INSERT INTO parcel_status_history (parcel_id, status, updated_by, notes)
        VALUES ($1, $2, $3, $4)`,
-      [parcel_id, status, updated_by, notes || '']
+      [parcel_id, status, updated_by, historyNotes]
     )
 
     await client.query('COMMIT')

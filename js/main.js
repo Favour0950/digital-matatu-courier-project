@@ -668,6 +668,22 @@ if (searchBtn) {
         document.getElementById('result-weight').textContent      = p.weight + ' kg'
         document.getElementById('result-cost').textContent        = 'KES ' + Number(p.amount_charged).toLocaleString()
 
+        // ── START STEP E CHANGE ──
+        const collectorRow = document.getElementById('collectorRow');
+        const collectorVal = document.getElementById('result-collected-by');
+
+        if (collectorRow && collectorVal) {
+          if (p.collected_by_name) {
+            // Fill the data: Name (ID Number)
+            collectorVal.textContent = `${p.collected_by_name} (ID: ${p.collected_by_id})`;
+            // Show the row
+            collectorRow.style.display = 'flex'; 
+          } else {
+            // If not collected yet, keep the row hidden
+            collectorRow.style.display = 'none';
+          }
+        }
+        // ── END STEP E CHANGE ──
         // Set status badge with correct colour
         const statusEl = document.getElementById('result-status')
         if (statusEl) {
@@ -746,8 +762,6 @@ if (searchBtn) {
     })
   })
 }
-
-
 // ============================================================
 // SECTION 8: UPDATE PARCEL STATUS (update-status.html)
 // Finds a parcel, shows its current status, lets clerk update it
@@ -760,6 +774,17 @@ if (statusSearchBtn) {
   // Stores the tracking number of the parcel currently shown
   // Used when the confirm button is clicked to know which parcel to update
   let currentTracking = null
+
+  // ── CHANGE: Collector Fields Toggle Logic ──
+  // This listener ensures the name/ID fields only show when 'Collected' is picked
+  const newStatusSelect = document.getElementById('newStatusSelect')
+  const collectorFields = document.getElementById('collectorFields')
+  if (newStatusSelect && collectorFields) {
+    newStatusSelect.addEventListener('change', function () {
+      collectorFields.style.display = this.value === 'Collected' ? 'block' : 'none'
+    })
+  }
+  // ── END CHANGE ──
 
   async function findParcelForStatus() {
     const query         = document.getElementById('statusSearchInput').value.trim().toUpperCase()
@@ -828,6 +853,29 @@ if (statusSearchBtn) {
       const ok = validateSelect(newStatus, statusErr, 'Please select a new status.')
       if (!ok) return
 
+      // ── CHANGE: Collector Data Validation ──
+      let collectorOk = true
+      const collectorName = document.getElementById('collectorName')
+      const collectorId   = document.getElementById('collectorId')
+      const nameErr = document.getElementById('collectorName-error')
+      const idErr   = document.getElementById('collectorId-error')
+
+      if (nameErr) nameErr.textContent = ''
+      if (idErr)   idErr.textContent = ''
+
+      if (newStatus.value === 'Collected') {
+        if (!collectorName || !collectorName.value.trim()) {
+          if (nameErr) nameErr.textContent = 'Collector name is required.'
+          collectorOk = false
+        }
+        if (!collectorId || !collectorId.value.trim()) {
+          if (idErr) idErr.textContent = 'Collector ID is required.'
+          collectorOk = false
+        }
+      }
+      if (!collectorOk) return
+      // ── END CHANGE ──
+
       try {
         const token = sessionStorage.getItem('token')
 
@@ -840,7 +888,11 @@ if (statusSearchBtn) {
           },
           body: JSON.stringify({
             status: newStatus.value,
-            notes:  notes ? notes.value.trim() : ''
+            notes:  notes ? notes.value.trim() : '',
+            // ── CHANGE: Sending collector info to backend ──
+            collected_by_name: collectorName ? collectorName.value.trim() : '',
+            collected_by_id:   collectorId   ? collectorId.value.trim()   : ''
+            // ── END CHANGE ──
           })
         })
         // --- ADD THIS SECTION HERE  to handle errors---
@@ -903,6 +955,11 @@ if (statusSearchBtn) {
       document.getElementById('updateSection').style.display  = 'none'
       document.getElementById('updateNotFound').style.display = 'none'
       currentTracking = null
+      // ── CHANGE: Reset collector fields ──
+      if (collectorFields) collectorFields.style.display = 'none'
+      if (document.getElementById('collectorName')) document.getElementById('collectorName').value = ''
+      if (document.getElementById('collectorId'))   document.getElementById('collectorId').value = ''
+      // ── END CHANGE ──
     })
   }
   // --- Modal Helpers ---
@@ -923,7 +980,7 @@ if (statusSearchBtn) {
       const modal = document.getElementById('paymentModal');
       if (modal) modal.style.display = 'none';
   }
-
+ 
   // ── BATCH UPDATE ──
   const tabSingle = document.getElementById('tabSingle')
   const tabBatch  = document.getElementById('tabBatch')
@@ -948,18 +1005,27 @@ if (statusSearchBtn) {
 
   // Load routes into the batch route dropdown
   async function loadBatchRoutes() {
-    const token = sessionStorage.getItem('token')
-    const res   = await fetch(`${API}/api/admin/routes`, { headers: { 'Authorization': 'Bearer ' + token } })
-    if (!res.ok) return
-    const routes = await res.json()
-    const select = document.getElementById('batchRoute')
-    if (!select) return
-    select.innerHTML = '<option value="">Select route</option>' +
-      routes.filter(r => r.is_active !== false).map(r =>
-        `<option value="${r.origin_office_id}_${r.destination_office_id}">
-          ${r.origin_name} → ${r.destination_name}
-        </option>`
-      ).join('')
+    try {
+      const token = sessionStorage.getItem('token');
+      const clerkOfficeId = sessionStorage.getItem('userOfficeId'); // Get clerk's office
+      const res = await fetch(`${API}/api/admin/routes`, { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) return;
+      const routes = await res.json();
+      const select = document.getElementById('batchRoute');
+      if (!select) return;
+
+      // CHANGE: Filter routes to only show those starting from the clerk's office
+      const filteredRoutes = routes.filter(r => 
+        r.is_active !== false && String(r.origin_office_id) === String(clerkOfficeId)
+      );
+
+      select.innerHTML = '<option value="">Select route</option>' +
+        filteredRoutes.map(r =>
+          `<option value="${r.origin_office_id}_${r.destination_office_id}">
+            ${r.origin_name} → ${r.destination_name}
+          </option>`
+        ).join('');
+    } catch (err) { console.error('Error loading batch routes:', err); }
   }
 
   // Load parcels matching the selected route and status filter
@@ -1030,7 +1096,7 @@ if (statusSearchBtn) {
         const token = sessionStorage.getItem('token')
         const res = await fetch(`${API}/api/parcels/batch-status`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          headers: { 'Content-Type':  'application/json', 'Authorization': 'Bearer ' + token },
           body: JSON.stringify({ tracking_numbers: selected, status: newStatus, notes })
         })
 
