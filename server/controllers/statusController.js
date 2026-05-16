@@ -111,5 +111,75 @@ const updateStatus = async (req, res) => {
     if (client) { client.release() }
   }
 }
+// ── BATCH STATUS UPDATE ──
+// Updates multiple parcels to the same new status at once
+// Used when a vehicle arrives and the clerk needs to update all parcels on that route
+const batchUpdateStatus = async (req, res) => {
+  // tracking_numbers is an array of tracking numbers to update
+  const { tracking_numbers, status, notes } = req.body
+  const updated_by = req.user.user_id
 
-module.exports = { updateStatus }
+  if (!Array.isArray(tracking_numbers) || tracking_numbers.length === 0) {
+    return res.status(400).json({ message: 'No tracking numbers provided' })
+  }
+
+  const validStatuses = ['Registered', 'Dispatched', 'In Transit', 'Arrived', 'Collected']
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: 'Invalid status' })
+  }
+
+  let client
+  try {
+    client = await pool.connect()
+    await client.query('BEGIN')
+
+    const results = { updated: [], failed: [] }
+
+    for (const tracking of tracking_numbers) {
+      // Find each parcel
+      const parcelRes = await client.query(
+        'SELECT parcel_id FROM parcels WHERE tracking_number = $1',
+        [tracking]
+      )
+
+      if (parcelRes.rows.length === 0) {
+        results.failed.push({ tracking, reason: 'Not found' })
+        continue
+      }
+
+      const parcel_id = parcelRes.rows[0].parcel_id
+
+      // Update status
+      await client.query(
+        'UPDATE parcels SET current_status = $1 WHERE parcel_id = $2',
+        [status, parcel_id]
+      )
+
+      // Log to history
+      await client.query(
+        `INSERT INTO parcel_status_history (parcel_id, status, updated_by, notes)
+         VALUES ($1, $2, $3, $4)`,
+        [parcel_id, status, updated_by, notes || 'Batch update']
+      )
+
+      results.updated.push(tracking)
+    }
+
+    await client.query('COMMIT')
+    res.json({
+      message: `${results.updated.length} parcels updated successfully`,
+      updated: results.updated,
+      failed:  results.failed
+    })
+
+  } catch (error) {
+    if (client) await client.query('ROLLBACK').catch(console.error)
+    console.error('Batch update error:', error)
+    res.status(500).json({ message: 'Server error during batch update' })
+  } finally {
+    if (client) client.release()
+  }
+}
+
+module.exports = { updateStatus, batchUpdateStatus }
+

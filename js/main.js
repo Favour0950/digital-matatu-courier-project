@@ -923,6 +923,138 @@ if (statusSearchBtn) {
       const modal = document.getElementById('paymentModal');
       if (modal) modal.style.display = 'none';
   }
+
+  // ── BATCH UPDATE ──
+  const tabSingle = document.getElementById('tabSingle')
+  const tabBatch  = document.getElementById('tabBatch')
+  const panelSingle = document.getElementById('panelSingle')
+  const panelBatch  = document.getElementById('panelBatch')
+
+  if (tabSingle && tabBatch) {
+    tabSingle.addEventListener('click', function () {
+      panelSingle.style.display = 'block'
+      panelBatch.style.display  = 'none'
+      tabSingle.classList.add('tab-active')
+      tabBatch.classList.remove('tab-active')
+    })
+    tabBatch.addEventListener('click', function () {
+      panelSingle.style.display = 'none'
+      panelBatch.style.display  = 'block'
+      tabBatch.classList.add('tab-active')
+      tabSingle.classList.remove('tab-active')
+      loadBatchRoutes() // load routes when batch tab opens
+    })
+  }
+
+  // Load routes into the batch route dropdown
+  async function loadBatchRoutes() {
+    const token = sessionStorage.getItem('token')
+    const res   = await fetch(`${API}/api/admin/routes`, { headers: { 'Authorization': 'Bearer ' + token } })
+    if (!res.ok) return
+    const routes = await res.json()
+    const select = document.getElementById('batchRoute')
+    if (!select) return
+    select.innerHTML = '<option value="">Select route</option>' +
+      routes.filter(r => r.is_active !== false).map(r =>
+        `<option value="${r.origin_office_id}_${r.destination_office_id}">
+          ${r.origin_name} → ${r.destination_name}
+        </option>`
+      ).join('')
+  }
+
+  // Load parcels matching the selected route and status filter
+  const loadBatchBtn = document.getElementById('loadBatchParcels')
+  if (loadBatchBtn) {
+    loadBatchBtn.addEventListener('click', async function () {
+      const routeVal = document.getElementById('batchRoute').value
+      const statusFilter = document.getElementById('batchCurrentStatus').value
+      if (!routeVal) { alert('Please select a route first.'); return }
+
+      const [originId, destId] = routeVal.split('_')
+      const token = sessionStorage.getItem('token')
+
+      // Fetch parcels on this route
+      const res  = await fetch(
+        `${API}/api/parcels/batch?origin=${originId}&destination=${destId}&status=${statusFilter}`,
+        { headers: { 'Authorization': 'Bearer ' + token } }
+      )
+
+      if (!res.ok) { alert('Could not load parcels.'); return }
+      const parcels = await res.json()
+
+      const tbody = document.getElementById('batchTableBody')
+      const results = document.getElementById('batchResults')
+      const countEl = document.getElementById('batchResultCount')
+
+      if (parcels.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px;">No parcels found for this filter.</td></tr>`
+      } else {
+        tbody.innerHTML = parcels.map(p => `
+          <tr>
+            <td><input type="checkbox" class="batch-checkbox" value="${p.tracking_number}" /></td>
+            <td>${p.tracking_number}</td>
+            <td>${p.sender_name}</td>
+            <td>${p.receiver_name}</td>
+            <td><span class="badge ${getStatusBadgeClass(p.current_status)}">${p.current_status}</span></td>
+          </tr>
+        `).join('')
+      }
+
+      if (countEl) countEl.textContent = `${parcels.length} parcel(s) found`
+      results.style.display = 'block'
+    })
+  }
+
+  // Select all checkbox
+  const checkAll = document.getElementById('checkAllBatch')
+  if (checkAll) {
+    checkAll.addEventListener('change', function () {
+      document.querySelectorAll('.batch-checkbox').forEach(cb => { cb.checked = this.checked })
+    })
+  }
+
+  // Confirm batch update
+  const confirmBatchBtn = document.getElementById('confirmBatchUpdate')
+  if (confirmBatchBtn) {
+    confirmBatchBtn.addEventListener('click', async function () {
+      const selected = Array.from(document.querySelectorAll('.batch-checkbox:checked')).map(cb => cb.value)
+      const newStatus = document.getElementById('batchNewStatus').value
+      const notes     = document.getElementById('batchNotes').value
+      const statusErr = document.getElementById('batchStatus-error')
+
+      if (selected.length === 0) { alert('Please select at least one parcel.'); return }
+      if (!newStatus) { statusErr.textContent = 'Please select a new status.'; return }
+      statusErr.textContent = ''
+
+      try {
+        const token = sessionStorage.getItem('token')
+        const res = await fetch(`${API}/api/parcels/batch-status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ tracking_numbers: selected, status: newStatus, notes })
+        })
+
+        const data = await res.json()
+        if (res.ok) {
+          document.getElementById('batchResults').style.display  = 'none'
+          document.getElementById('batchSuccess').style.display  = 'block'
+          document.getElementById('batchSuccessMsg').textContent = data.message
+        } else {
+          alert(data.message || 'Batch update failed.')
+        }
+      } catch (e) { console.error('Batch update error:', e) }
+    })
+  }
+
+  const batchAgainBtn = document.getElementById('batchAgainBtn')
+  if (batchAgainBtn) {
+    batchAgainBtn.addEventListener('click', function () {
+      document.getElementById('batchSuccess').style.display = 'none'
+      document.getElementById('batchResults').style.display = 'none'
+      document.getElementById('batchRoute').value = ''
+      document.getElementById('batchNewStatus').value = ''
+    })
+  }
 }
 
 
