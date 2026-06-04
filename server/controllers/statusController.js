@@ -149,9 +149,15 @@ const batchUpdateStatus = async (req, res) => {
     // If the page is stale or someone sends an invalid tracking number directly,
     // the whole request is rejected so no half-updated batch can be committed.
     const parcelRes = await client.query(
-      `SELECT parcel_id, tracking_number
-       FROM parcels
-       WHERE tracking_number = ANY($1::text[])`,
+      `SELECT
+         p.parcel_id,
+         p.tracking_number,
+         s.phone_number AS sender_phone,
+         r.phone_number AS receiver_phone
+       FROM parcels p
+       JOIN customers s ON p.sender_id = s.customer_id
+       JOIN customers r ON p.receiver_id = r.customer_id
+       WHERE p.tracking_number = ANY($1::text[])`,
       [tracking_numbers]
     )
 
@@ -191,9 +197,26 @@ const batchUpdateStatus = async (req, res) => {
     }
 
     await client.query('COMMIT')
+
+    // CHANGE START: Send SMS notifications after a successful batch commit.
+    // This mirrors the single-parcel update flow and stays non-blocking so
+    // slow SMS gateway responses do not delay the clerk's batch update screen.
+    try {
+      const { sendSMS } = require('../services/smsService')
+
+      parcelRes.rows.forEach(parcel => {
+        const message = `SwiftCourier: Your parcel ${parcel.tracking_number} status is now "${status}". Thank you.`
+        sendSMS([parcel.sender_phone, parcel.receiver_phone], message).catch(console.error)
+      })
+    } catch (smsError) {
+      console.error('Batch SMS trigger error:', smsError)
+    }
+    // CHANGE END
+
     res.json({
       message: `${results.updated.length} parcels updated successfully`,
-      updated: results.updated
+      updated: results.updated,
+      sms_attempted: true
     })
 
   } catch (error) {
