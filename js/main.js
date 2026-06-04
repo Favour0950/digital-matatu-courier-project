@@ -120,12 +120,28 @@ async function populateRecentPills(containerId) {
       // Add click listeners to new pills
       container.querySelectorAll('.pill').forEach(pill => {
         pill.addEventListener('click', function() {
-          const input = containerId.includes('status') 
-            ? document.getElementById('statusSearchInput') 
-            : document.getElementById('searchInput');
+          // CHANGE START: Route recent pills to the correct page search box.
+          const isStatusPill = containerId.includes('status')
+          const isPaymentPill = containerId.includes('payment')
+          const input = isStatusPill
+            ? document.getElementById('statusSearchInput')
+            : isPaymentPill
+              ? document.getElementById('paymentSearchInput')
+              : document.getElementById('searchInput')
+          // CHANGE END
+
+          if (!input) return
           input.value = this.getAttribute('data-tracking');
           // Trigger search automatically
-          containerId.includes('status') ? findParcelForStatus() : runSearch();
+          // CHANGE START: Trigger the matching search action for the current page.
+          if (isStatusPill) {
+            findParcelForStatus()
+          } else if (isPaymentPill) {
+            findParcelForPayment()
+          } else {
+            runSearch()
+          }
+          // CHANGE END
         });
       });
     }
@@ -1277,6 +1293,10 @@ if (paymentSearchBtn) {
     }, 100);
   }
   // ── END OF AUTO-FILL LOGIC ──
+
+  // CHANGE START: Show recent tracking pills on the payment page too.
+  populateRecentPills('paymentRecentPills')
+  // CHANGE END
 
   async function findParcelForPayment() {
     const query          = document.getElementById('paymentSearchInput').value.trim().toUpperCase()
