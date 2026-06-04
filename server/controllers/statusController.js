@@ -132,9 +132,12 @@ const batchUpdateStatus = async (req, res) => {
     return res.status(400).json({ message: 'No tracking numbers provided' })
   }
 
-  const validStatuses = ['Registered', 'Dispatched', 'In Transit', 'Arrived', 'Collected']
+  // CHANGE START: Batch updates intentionally exclude Collected.
+  // Collection must stay a single-parcel action because it has payment and collector-ID checks.
+  const validStatuses = ['Registered', 'Dispatched', 'In Transit', 'Arrived']
+  // CHANGE END
   if (!validStatuses.includes(status)) {
-    return res.status(400).json({ message: 'Invalid status' })
+    return res.status(400).json({ message: 'Invalid status. Batch updates cannot mark parcels as Collected.' })
   }
 
   let client
@@ -142,21 +145,34 @@ const batchUpdateStatus = async (req, res) => {
     client = await pool.connect()
     await client.query('BEGIN')
 
-    const results = { updated: [], failed: [] }
+    // CHANGE START: Validate the full batch before changing any parcel.
+    // If the page is stale or someone sends an invalid tracking number directly,
+    // the whole request is rejected so no half-updated batch can be committed.
+    const parcelRes = await client.query(
+      `SELECT parcel_id, tracking_number
+       FROM parcels
+       WHERE tracking_number = ANY($1::text[])`,
+      [tracking_numbers]
+    )
 
-    for (const tracking of tracking_numbers) {
-      // Find each parcel
-      const parcelRes = await client.query(
-        'SELECT parcel_id FROM parcels WHERE tracking_number = $1',
-        [tracking]
-      )
+    const foundTrackingNumbers = parcelRes.rows.map(row => row.tracking_number)
+    const missingTrackingNumbers = tracking_numbers.filter(
+      tracking => !foundTrackingNumbers.includes(tracking)
+    )
 
-      if (parcelRes.rows.length === 0) {
-        results.failed.push({ tracking, reason: 'Not found' })
-        continue
-      }
+    if (missingTrackingNumbers.length > 0) {
+      await client.query('ROLLBACK')
+      return res.status(400).json({
+        message: 'Batch update cancelled. One or more selected parcels could not be found.',
+        missing: missingTrackingNumbers
+      })
+    }
+    // CHANGE END
 
-      const parcel_id = parcelRes.rows[0].parcel_id
+    const results = { updated: [] }
+
+    for (const parcel of parcelRes.rows) {
+      const parcel_id = parcel.parcel_id
 
       // Update status
       await client.query(
@@ -171,14 +187,13 @@ const batchUpdateStatus = async (req, res) => {
         [parcel_id, status, updated_by, notes || 'Batch update']
       )
 
-      results.updated.push(tracking)
+      results.updated.push(parcel.tracking_number)
     }
 
     await client.query('COMMIT')
     res.json({
       message: `${results.updated.length} parcels updated successfully`,
-      updated: results.updated,
-      failed:  results.failed
+      updated: results.updated
     })
 
   } catch (error) {

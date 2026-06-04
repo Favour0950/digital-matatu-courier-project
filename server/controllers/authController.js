@@ -8,7 +8,7 @@ const login = async (req, res) => {
   const { email, password } = req.body
 
   try {
-    // Find user by email
+    // 1. Find user by email
     const result = await pool.query(
       'SELECT * FROM users WHERE email = $1', [email]
     )
@@ -19,13 +19,20 @@ const login = async (req, res) => {
 
     const user = result.rows[0]
 
-    // Compare password with stored hash
+    // 2. NEW: Block login if account is deactivated
+    if (user.is_active === false) {
+      return res.status(403).json({ 
+        message: 'This account has been deactivated. Please contact your administrator.' 
+      })
+    }
+
+    // 3. Compare password with stored hash (checking column 'password_hash')
     const validPassword = await bcrypt.compare(password, user.password_hash)
     if (!validPassword) {
       return res.status(401).json({ message: 'Invalid email or password' })
     }
 
-    // Sign JWT token
+    // 4. Sign JWT token
     const token = jwt.sign(
       { user_id: user.user_id, role: user.role, name: user.name, office_id: user.office_id },
       process.env.JWT_SECRET,

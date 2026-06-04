@@ -114,7 +114,9 @@ const registerParcel = async (req, res) => {
       let amount_charged;
       const routeResult = await pool.query(
         `SELECT base_price, price_per_kg FROM routes 
-        WHERE origin_office_id = $1 AND destination_office_id = $2`,
+        WHERE origin_office_id = $1
+          AND destination_office_id = $2
+          AND is_active = true`,
         [origin_office_id, destination_office_id]
       );
 
@@ -123,8 +125,10 @@ const registerParcel = async (req, res) => {
         const route = routeResult.rows[0];
         amount_charged = parseFloat(route.base_price) + (parseFloat(weight) * parseFloat(route.price_per_kg || 0));
       } else {
-        // Fallback if no route is found (though the UI should prevent this)
-        amount_charged = 500; 
+        // CHANGE START: Do not allow parcels on missing or deactivated routes.
+        // The clerk UI already hides inactive routes, and this protects the backend too.
+        return res.status(400).json({ message: 'Selected route is unavailable. Please choose an active route.' })
+        // CHANGE END
       }
 
     // ── Step 6: Save the parcel record ──

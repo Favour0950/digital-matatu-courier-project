@@ -57,6 +57,27 @@ function validateEmail(input, errorSpan) {
   }
 }
 
+// CHANGE START: Shared loading state helper for submit/save buttons.
+// Disables a button while a request is running, shows feedback text,
+// and returns a reset function so every page can restore the button safely.
+function startButtonLoading(button, loadingText) {
+  if (!button) return function () {}
+  if (button.dataset.loading === 'true') return null
+
+  button.dataset.loading = 'true'
+  button.dataset.originalText = button.textContent
+  button.disabled = true
+  button.textContent = loadingText
+
+  return function stopButtonLoading() {
+    button.disabled = false
+    button.textContent = button.dataset.originalText || button.textContent
+    button.dataset.loading = 'false'
+    delete button.dataset.originalText
+  }
+}
+// CHANGE END
+
 // Returns the correct CSS badge class for a given parcel status string
 // Used by search parcel, update status, clerk dashboard, and reports pages
 function getStatusBadgeClass(status) {
@@ -317,6 +338,11 @@ if (loginForm) {
     if (!role.value)            { roleError.textContent    = 'Please select a role.';       valid = false }
     if (!valid) return
 
+    // CHANGE START: Prevent double login submits while the server responds.
+    const stopLoading = startButtonLoading(loginForm.querySelector('button[type="submit"]'), 'Signing in...')
+    if (!stopLoading) return
+    // CHANGE END
+
     try {
       // POST /api/auth/login — the backend checks credentials and returns a JWT token
       const response = await fetch(`${API}/api/auth/login`, {
@@ -372,6 +398,8 @@ if (loginForm) {
     } catch (error) {
       console.error('Login error:', error)
       emailError.textContent = 'Cannot connect to server. Make sure the backend is running.'
+    } finally {
+      stopLoading()
     }
   })
 }
@@ -624,6 +652,11 @@ if (registerForm) {
 
     if (!ok) return
 
+    // CHANGE START: Prevent duplicate parcel records from double-clicking Register.
+    const stopLoading = startButtonLoading(registerForm.querySelector('button[type="submit"]'), 'Registering...')
+    if (!stopLoading) return
+    // CHANGE END
+
     try {
       const token = sessionStorage.getItem('token')
 
@@ -660,6 +693,8 @@ if (registerForm) {
     } catch (error) {
       console.error('Register parcel error:', error)
       document.getElementById('sender-name-error').textContent = 'Cannot connect to server.'
+    } finally {
+      stopLoading()
     }
   })
 
@@ -951,6 +986,11 @@ if (statusSearchBtn) {
       if (!collectorOk) return
       // ── END CHANGE ──
 
+      // CHANGE START: Disable confirm button during the status update request.
+      const stopLoading = startButtonLoading(confirmStatusBtn, 'Updating...')
+      if (!stopLoading) return
+      // CHANGE END
+
       try {
         const token = sessionStorage.getItem('token')
 
@@ -1017,6 +1057,8 @@ if (statusSearchBtn) {
 
       } catch (error) {
         console.error('Update status error:', error)
+      } finally {
+        stopLoading()
       }
     })
   }
@@ -1167,6 +1209,11 @@ if (statusSearchBtn) {
       if (!newStatus) { statusErr.textContent = 'Please select a new status.'; return }
       statusErr.textContent = ''
 
+      // CHANGE START: Prevent repeated batch update requests.
+      const stopLoading = startButtonLoading(confirmBatchBtn, 'Updating...')
+      if (!stopLoading) return
+      // CHANGE END
+
       try {
         const token = sessionStorage.getItem('token')
         const res = await fetch(`${API}/api/parcels/batch-status`, {
@@ -1183,7 +1230,11 @@ if (statusSearchBtn) {
         } else {
           alert(data.message || 'Batch update failed.')
         }
-      } catch (e) { console.error('Batch update error:', e) }
+      } catch (e) {
+        console.error('Batch update error:', e)
+      } finally {
+        stopLoading()
+      }
     })
   }
 
@@ -1343,6 +1394,11 @@ if (paymentSearchBtn) {
 
       if (!methodOk || !amountOk || !mpesaOk) return
 
+      // CHANGE START: Prevent duplicate payment records from repeated clicks.
+      const stopLoading = startButtonLoading(confirmPaymentBtn, 'Recording...')
+      if (!stopLoading) return
+      // CHANGE END
+
       try {
         const token           = sessionStorage.getItem('token')
         const tracking_number = document.getElementById('pay-tracking').textContent
@@ -1392,6 +1448,8 @@ if (paymentSearchBtn) {
 
       } catch (error) {
         console.error('Payment error:', error)
+      } finally {
+        stopLoading()
       }
     })
   }
@@ -1750,6 +1808,11 @@ if (clerksTableBodyEl) {
 
       if (!nameOk || !emailOk || !officeOk || !passOk) return
 
+      // CHANGE START: Prevent duplicate clerk accounts from double-clicking Add.
+      const stopLoading = startButtonLoading(submitAddClerk, 'Creating...')
+      if (!stopLoading) return
+      // CHANGE END
+
       try {
         const token = sessionStorage.getItem('token')
 
@@ -1779,6 +1842,8 @@ if (clerksTableBodyEl) {
 
       } catch (error) {
         console.error('Create clerk error:', error)
+      } finally {
+        stopLoading()
       }
     })
   }
@@ -1825,6 +1890,11 @@ if (clerksTableBodyEl) {
 
       if (!nameOk || !officeOk) return
 
+      // CHANGE START: Disable save button while clerk updates are being saved.
+      const stopLoading = startButtonLoading(saveEditClerk, 'Saving...')
+      if (!stopLoading) return
+      // CHANGE END
+
       try {
         const token = sessionStorage.getItem('token')
 
@@ -1852,6 +1922,8 @@ if (clerksTableBodyEl) {
 
       } catch (error) {
         console.error('Edit clerk error:', error)
+      } finally {
+        stopLoading()
       }
     })
   }
@@ -2023,7 +2095,8 @@ if (officesGrid) {
             <button class="btn-actions">···</button>
             <div class="actions-dropdown">
               <button onclick="editOffice(${index})">✏️ Edit</button>
-              <button class="danger" onclick="deactivateOffice(${index})">🗑️ Delete</button>
+              <!-- CHANGE START: Office deletion is no longer exposed in the UI. -->
+              <!-- CHANGE END -->
             </div>
           </div>
         </div>
@@ -2150,6 +2223,11 @@ if (officesGrid) {
 
       if (!nameOk || !addressOk) return
 
+      // CHANGE START: Prevent duplicate office records from repeated clicks.
+      const stopLoading = startButtonLoading(submitOfficeBtn, 'Creating...')
+      if (!stopLoading) return
+      // CHANGE END
+
       try {
         const token = sessionStorage.getItem('token')
 
@@ -2176,6 +2254,8 @@ if (officesGrid) {
 
       } catch (error) {
         console.error('Create office error:', error)
+      } finally {
+        stopLoading()
       }
     })
   }
@@ -2237,6 +2317,11 @@ if (officesGrid) {
 
       if (!originOk || !destOk || !distOk || !priceOk || !kgOk) return
 
+      // CHANGE START: Prevent duplicate route records from repeated clicks.
+      const stopLoading = startButtonLoading(submitRouteBtn, 'Creating...')
+      if (!stopLoading) return
+      // CHANGE END
+
       try {
         const token = sessionStorage.getItem('token')
 
@@ -2271,6 +2356,8 @@ if (officesGrid) {
 
       } catch (error) {
         console.error('Create route error:', error)
+      } finally {
+        stopLoading()
       }
     })
   }
@@ -2303,6 +2390,11 @@ if (officesGrid) {
 
       if (!nameOk || !locationOk) return
 
+      // CHANGE START: Disable save button while office changes are saved.
+      const stopLoading = startButtonLoading(saveEditOfficeBtn, 'Saving...')
+      if (!stopLoading) return
+      // CHANGE END
+
       try {
         const token = sessionStorage.getItem('token')
         const response = await fetch(`${API}/api/admin/offices/${officeId}`, {
@@ -2326,6 +2418,8 @@ if (officesGrid) {
         }
       } catch (error) {
         console.error('Edit office error:', error)
+      } finally {
+        stopLoading()
       }
     })
   }
@@ -2386,6 +2480,11 @@ if (officesGrid) {
 
       if (!originOk || !destOk || !distOk || !priceOk || !kgOk) return
 
+      // CHANGE START: Disable save button while route changes are saved.
+      const stopLoading = startButtonLoading(saveEditRouteBtn, 'Saving...')
+      if (!stopLoading) return
+      // CHANGE END
+
       try {
         const token = sessionStorage.getItem('token')
         const response = await fetch(`${API}/api/admin/routes/${routeId}`, {
@@ -2412,6 +2511,8 @@ if (officesGrid) {
         }
       } catch (error) {
         console.error('Edit route error:', error)
+      } finally {
+        stopLoading()
       }
     })
   }
@@ -2617,6 +2718,11 @@ if (submitChangePwd) {
     if (newPwd.value !== confirm.value) { confErr.textContent = 'Passwords do not match.';          valid = false }
     if (!valid) return
 
+    // CHANGE START: Prevent repeated password change requests.
+    const stopLoading = startButtonLoading(submitChangePwd, 'Updating...')
+    if (!stopLoading) return
+    // CHANGE END
+
     try {
       const token    = sessionStorage.getItem('token')
       const response = await fetch(`${API}/api/auth/change-password`, {
@@ -2634,6 +2740,8 @@ if (submitChangePwd) {
       }
     } catch (error) {
       console.error('Change password error:', error)
+    } finally {
+      stopLoading()
     }
   })
 }
